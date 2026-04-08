@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CineVerse – Book Your Experience</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+
+<!-- ─── NAVBAR ─── -->
+<nav>
+  <div class="nav-inner">
+    <a class="nav-logo" href="#"><span>CINE</span>VERSE</a>
+    <div class="nav-search">
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+      </svg>
+      <input type="text" id="search-input" placeholder="Search movies, genres…" />
+    </div>
+    <ul class="nav-links">
+      <li><a href="#" class="active" onclick="showSection('home',this)">Home</a></li>
+      <li><a href="#" onclick="showSection('movies',this)">Movies</a></li>
+      <li><a href="#" onclick="showSection('upcoming',this)">Upcoming</a></li>
+    </ul>
+    <div class="nav-actions">
+      <button id="nav-cart-btn" onclick="toggleCart()">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4zM3 6h18M16 10a4 4 0 01-8 0"/>
+        </svg>
+        <span>Cart</span>
+        <span id="cart-badge"></span>
+      </button>
+      <div id="auth-btns" style="display:flex;gap:8px;">
+        <button class="btn btn-ghost" style="padding:7px 16px;font-size:13px;" onclick="openAuth('login')">Sign In</button>
+        <button class="btn btn-primary" style="padding:7px 16px;font-size:13px;" onclick="openAuth('register')">Sign Up</button>
+      </div>
+      <div class="user-menu-wrapper" id="user-menu-wrapper" style="display:none;">
+        <button id="user-menu-btn" onclick="toggleUserMenu()">
+          <span id="user-initial">U</span>
+        </button>
+        <div id="user-dropdown">
+          <div class="dropdown-user-info">
+            <div class="name" id="dropdown-name">User</div>
+            <div class="email" id="dropdown-email">user@email.com</div>
+          </div>
+          <div class="dropdown-item" onclick="toggleUserMenu()">
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>
+            </svg>
+            My Bookings
+          </div>
+          <div class="dropdown-divider"></div>
+          <div class="dropdown-item danger" onclick="logoutUser()">
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/>
+            </svg>
+            Sign Out
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- ─── HERO ─── -->
+<div id="hero">
+  <div id="hero-bg"></div>
+  <div id="hero-overlay"></div>
+  <div class="hero-content">
+    <div id="hero-badge"></div>
+    <h1 id="hero-title">Loading…</h1>
+    <div class="hero-meta" id="hero-meta"></div>
+    <p id="hero-desc"></p>
+    <div class="hero-actions">
+      <button class="btn btn-primary" id="hero-book-btn" style="padding:12px 28px;font-size:15px;">
+        Book Tickets
+      </button>
+      <button class="btn btn-ghost" id="hero-info-btn" style="padding:12px 20px;font-size:15px;">
+        More Info
+      </button>
+    </div>
+  </div>
+  <div class="hero-dots" id="hero-dots"></div>
+</div>
+
+<!-- ─── MAIN CONTENT ─── -->
+<main>
+  <section class="trending-section">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title">Now Showing</h2>
+        <a href="#" class="section-link" onclick="showSection('movies', document.querySelector('.nav-links a:nth-child(2)'))">
+          View all →
+        </a>
+      </div>
+      <div class="filter-bar">
+        <button class="filter-chip active" onclick="setGenre('',this)">All</button>
+        <button class="filter-chip" onclick="setGenre('Action',this)">Action</button>
+        <button class="filter-chip" onclick="setGenre('Drama',this)">Drama</button>
+        <button class="filter-chip" onclick="setGenre('Comedy',this)">Comedy</button>
+        <button class="filter-chip" onclick="setGenre('Thriller',this)">Thriller</button>
+        <button class="filter-chip" onclick="setGenre('Sci-Fi',this)">Sci-Fi</button>
+        <button class="filter-chip" onclick="setGenre('Horror',this)">Horror</button>
+        <button class="filter-chip" onclick="setGenre('Romance',this)">Romance</button>
+        <select class="filter-select" id="sort-select" onchange="setSort(this.value)">
+          <option value="">Sort by</option>
+          <option value="latest">Latest</option>
+          <option value="oldest">Oldest</option>
+        </select>
+        <select class="filter-select" id="lang-select" onchange="setLang(this.value)">
+          <option value="">All Languages</option>
+          <option value="english">English</option>
+          <option value="hindi">Hindi</option>
+          <option value="tamil">Tamil</option>
+          <option value="telugu">Telugu</option>
+          <option value="kannada">Kannada</option>
+        </select>
+        <select class="filter-select" id="status-select" onchange="setStatus(this.value)">
+          <option value="">All Status</option>
+          <option value="released">Released</option>
+          <option value="upcoming">Upcoming</option>
+        </select>
+      </div>
+      <div class="movies-grid" id="movies-grid">
+        <div id="movies-loading">Loading movies…</div>
+        <div id="movies-empty">
+          <div style="font-size:2rem;margin-bottom:8px;">🎬</div>
+          <div>No movies found</div>
+          <div style="font-size:12px;margin-top:4px;">Try adjusting your filters</div>
+        </div>
+      </div>
+      <div id="pagination-wrapper" class="pagination" style="display:none;"></div>
+    </div>
+  </section>
+</main>
+
+<!-- ─── FOOTER ─── -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-logo">CINE<span>VERSE</span></div>
+    <div class="footer-copy">© 2025 CineVerse. All rights reserved.</div>
+    <div style="font-size:13px;color:var(--text3);">Built for movie lovers.</div>
+  </div>
+</footer>
+
+<!-- ─── MOVIE DETAIL MODAL ─── -->
+<div id="modal-overlay" onclick="closeModal(event)">
+  <div class="modal" id="movie-modal">
+    <button class="modal-close-btn" onclick="closeModal(null,true)">✕</button>
+    <div class="modal-header">
+      <div id="modal-poster-wrap"></div>
+      <div class="modal-info">
+        <div class="modal-meta" id="modal-status-badges"></div>
+        <h2 class="modal-title" id="modal-title">Movie Title</h2>
+        <div class="modal-meta" id="modal-meta"></div>
+        <p class="modal-desc" id="modal-desc"></p>
+        <div class="modal-tags" id="modal-tags"></div>
+        <div class="modal-actions" id="modal-actions"></div>
+      </div>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
+<!-- ─── AUTH MODAL ─── -->
+<div id="auth-overlay" onclick="closeAuthModal(event)">
+  <div class="auth-modal">
+    <button class="modal-close-btn" onclick="closeAuthModal(null,true)">✕</button>
+    <h2 id="auth-title">Sign In</h2>
+    <p id="auth-subtitle">Welcome back to CineVerse</p>
+    <div id="auth-form-wrapper"></div>
+    <div class="auth-switch" id="auth-switch"></div>
+  </div>
+</div>
+
+<!-- ─── CART SIDEBAR ─── -->
+<div id="cart-sidebar">
+  <div class="cart-header">
+    <h3>Your Cart</h3>
+    <button class="cart-close" onclick="toggleCart()">✕</button>
+  </div>
+  <div class="cart-items" id="cart-items-list">
+    <div class="cart-empty">Your cart is empty.<br>Book some movies!</div>
+  </div>
+  <div class="cart-footer">
+    <div class="cart-total">
+      <span class="cart-total-label">Total</span>
+      <span class="cart-total-amount" id="cart-total-amount">₹0</span>
+    </div>
+    <button class="btn btn-primary" id="checkout-btn" onclick="checkout()">
+      Proceed to Checkout →
+    </button>
+  </div>
+</div>
+
+<!-- ─── TOAST ─── -->
+<div id="toast"></div>
+
+<script src="script.js"></script>
+</body>
+</html>
