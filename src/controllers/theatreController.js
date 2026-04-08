@@ -109,3 +109,29 @@ exports.getAllTheatres = async (req, res) => {
         })
     }
 }
+
+exports.getTheatreById = async function(req,res){
+    try {
+        const { id } = req.params
+
+        if(!id){
+            return res.status(400).json({Status: "id not mentioned"})
+        }
+
+        const existingTheatre = await movie.findOne(id)
+
+        if(!existingTheatre){
+            return res.status(409).json({
+                message: "Theatre not found."
+            })
+        }
+
+        return res.status(200).json({Theatre: existingTheatre})
+
+    } catch (error) {
+        return res.status(500).json({
+            message: "Internal Server Error",
+            error: error.message
+        })
+    }
+}
