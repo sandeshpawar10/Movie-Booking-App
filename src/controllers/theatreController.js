@@ -1,4 +1,5 @@
 const theatre = require("../models/theatreModel")
+const shows = require("../models/showModel")
 
 exports.addtheatreFunction = async function(req,res){
     try {
@@ -158,5 +159,31 @@ exports.getTheatreByCity = async function(req,res){
 
     } catch (error) {
         return res.status(500).json({ error: error.message })
+    }
+}
+
+exports.getTheatreShows = async function(req,res){
+    try {
+        const { id } = req.params
+
+        if(!id){
+            return res.status(400).json({Status: "id not mentioned"})
+        }
+
+        const s = await shows.findOne({theatre: id}).populate("movie").populate("screen")
+
+        if(!s){
+            return res.status(400).json({
+                message: "Shows not found."
+            })
+        }
+
+        return res.status(200).json({Shows: s})
+
+    } catch (error) {
+        return res.status(500).json({
+            message: "Internal Server Error",
+            error: error.message
+        })
     }
 }
