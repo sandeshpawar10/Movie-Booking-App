@@ -135,3 +135,28 @@ exports.getTheatreById = async function(req,res){
         })
     }
 }
+
+exports.getTheatreByCity = async function(req,res){
+    try {
+        const { city } = req.query
+
+        const theatres = await theatre.find({
+            "location.city": city,
+            isActive: true
+        })
+
+        const total = await theatre.countDocuments({
+            "location.city": city,
+            isActive: true
+        })
+
+        return res.status(200).json({
+            Total: total,
+            Theatres: theatres
+            
+        })
+
+    } catch (error) {
+        return res.status(500).json({ error: error.message })
+    }
+}

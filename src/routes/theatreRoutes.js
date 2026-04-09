@@ -9,5 +9,7 @@ router.post('/theatre/remove', verifyJWt, checkAdmin, controller.removetheatreFu
 router.post('/theatre/update', verifyJWt, checkAdmin, controller.updatetheatreFunction)
 router.get('/theatre/all-theatre',controller.getAllTheatres)
 router.get('/theatre/get-theatre/:id',controller.getTheatreById)
+router.get('/theatre/theatre-by-city',controller.getTheatreByCity)
+
 
 module.exports = router
