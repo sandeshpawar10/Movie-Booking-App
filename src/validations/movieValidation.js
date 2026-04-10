@@ -25,4 +25,17 @@ const updateMovieValidation = z.object({
     poster: z.string().optional()
 })
 
+const updateshowValidation = z.object({
+    movie: z.string().optional(),
+    theatre: z.string().optional(),
+    screen: z.string().optional(),
+    startTime: z.date().optional(),
+    price: z.object({
+        silver: z.number(),
+        platinum: z.number(),
+        gold: z.number(),
+    }).optional(),
+    seatsAvailble: z.array().optional()
+})
+
 module.exports = {movieValidation,titleValidation,updateMovieValidation}
