@@ -25,6 +25,19 @@ exports.addshowsFunction = async function(req,res){
     }
 }
 
+exports.removeAllShows = async function(req,res){
+    try {
+        await show.deleteMany({})
+
+        return res.status(201).json({Status: "All Shows deleted successfully !!"})
+    } catch (error) {
+        return res.status(500).json({
+            message: "Internal Server Error",
+            error: error.message
+        })
+    }
+}
+
 exports.removeshowsFunction = async function(req,res){
     try {
         const { id } = req.params
