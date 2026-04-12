@@ -6,6 +6,7 @@ const connectDB = require("./src/db/connection.js")
 const userRoute = require("./src/routes/userRoutes")
 const movieRoute = require("./src/routes/movieRoutes")
 const theatreroute = require("./src/routes/theatreRoutes.js")
+const showRoutes = require("./src/routes/showRoutes.js")
 const cookieParser = require("cookie-parser")
 dotenv.config({
     path:"./.env"
@@ -31,6 +32,7 @@ app.use(cors({
 app.use('/',userRoute)
 app.use('/',movieRoute)
 app.use('/',theatreroute)
+app.use('/',showRoutes)
 
 app.listen(port,()=>{
     console.log(`server started on port ${port}`)

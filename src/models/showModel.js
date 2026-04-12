@@ -40,7 +40,7 @@ const showSchema = new Schema({
             required: true
         }
     },
-    bookedSeats: {
+    seatsAvailble: {
             type: [String],
             default: [],
             required: true
