@@ -1,21 +1,22 @@
 const show = require("../models/showModel")
+const theatre = require("../models/theatreModel")
 const {updateshowValidation} = require("../validations/movieValidation")
 
 exports.addshowsFunction = async function(req,res){
     try {
         
-        // const {name,city,address} = req.body
-        // if(!(name||city||address)){
-        //     return res.status(409).json({
-        //         message: "Please enter valid details !"
-        //     })
-        // }
+        const {theatre} = req.body
+
+        const theatreExists = await theatre.findById(theatre);
+        if (!theatreExists) {
+            return res.status(404).json({ message: "Theatre not found" });
+        }
 
         const m = await show.create(req.body)
 
         // console.log(m)
 
-        return res.status(201).json({Status: "Theatre added successfully !!", Data: m})
+        return res.status(201).json({Status: "Show added successfully !!", Data: m})
 
     } catch (error) {
         return res.status(500).json({
@@ -246,6 +247,32 @@ exports.getShowByCity = async function(req,res){
             
         })
 
+    } catch (error) {
+        return res.status(500).json({ error: error.message })
+    }
+}
+
+exports.getScreenByMovie = async function(req,res){
+    try {
+        const {movieid} = req.params
+
+        const s = await show.find({movie: movieid}).populate("theatre screen")
+
+        const screens = []
+        const seen = new Set()
+
+        for(let sh of s){
+            const screenid = sh.screen._id.toString()
+            if(!seen.has(screenid)){
+                seen.add(screenid)
+                screens.push(show.screen)
+            }
+        }
+
+        return res.status(200).json({
+            total: screens.length,
+            Screens: screens
+        })
     } catch (error) {
         return res.status(500).json({ error: error.message })
     }
