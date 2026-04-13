@@ -38,4 +38,15 @@ const updateshowValidation = z.object({
     seatsAvailble: z.array().optional()
 })
 
-module.exports = {movieValidation,titleValidation,updateMovieValidation}
+const updatescreenValidation = z.object({
+    name: z.string().optional(),
+    theatre: z.string().optional(),
+    screenNUmber: z.number().optional(),
+    totalSeats: z.number().optional(),
+    startTime: z.date().optional(),
+    seatLayout: z.object({
+        row: z.string(),
+    }).optional(),
+})
+
+module.exports = {movieValidation,titleValidation,updateMovieValidation,updateshowValidation,updatescreenValidation}
