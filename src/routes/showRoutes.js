@@ -14,5 +14,6 @@ router.get('/show/show-by-theatreId/:theatreid',controller.getShowByTheatreId)
 router.get('/show/availbleSeats/:id',controller.getAvailableSeats)
 router.get('/show/show-by-city',controller.getShowByCity)
 router.get('/show/show-by-movieId/:movieid',controller.getShowByMovieId)
+router.get('/show/screen-by-movieId/:movieid',controller.getScreenByMovie)
 
 module.exports = router
