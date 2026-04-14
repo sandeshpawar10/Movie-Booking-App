@@ -5,11 +5,16 @@ const {updateshowValidation} = require("../validations/movieValidation")
 exports.addshowsFunction = async function(req,res){
     try {
         
-        const {theatre} = req.body
+        const {theatreId, screen} = req.body
 
-        const theatreExists = await theatre.findById(theatre);
+        const theatreExists = await theatre.findById(theatreId);
         if (!theatreExists) {
             return res.status(404).json({ message: "Theatre not found" });
+        }
+
+        const screenExists = await show.findOne({screen: screen});
+        if (screenExists) {
+            return res.status(400).json({ message: "Screen is already in the use." });
         }
 
         const m = await show.create(req.body)
@@ -113,7 +118,7 @@ exports.getShowById = async function(req,res){
             return res.status(400).json({Status: "id not mentioned"})
         }
 
-        const existingShow = await show.findOne(id)
+        const existingShow = await show.findById(id).populate("theatreId screen")
 
         if(!existingShow){
             return res.status(409).json({
@@ -183,11 +188,32 @@ exports.getAvailableSeats = async function(req,res){
             return res.status(400).json({Status: "id not mentioned"})
         }
         
-        const s = await show.findById(id)
+        const s = await show.findById(id).populate("screen")
+
+        if(!s){
+            return res.status(404).json({ message: "Show not found" });
+        }
+
+        const layout = s.screen.seatLayout;
+
+        let availableSeats = [];
+
+        for(let row of layout){
+            for(let seat of row.seats){
+                if(!seat.isBooked){
+                    availableSeats.push({
+                        row: row.row,
+                        number: seat.number,
+                        type: seat.type
+                    });
+                }
+            }
+        }
 
         return res.status(200).json({
-            seatsAvailble: s.seatsAvailble
-        })
+            availableSeatsCount: availableSeats.length,
+            availableSeats
+        });
     } catch (error) {
         return res.status(500).json({
             message: "Internal Server Error",
@@ -204,8 +230,8 @@ exports.getShowByTheatreId = async function(req,res){
             return res.status(400).json({Status: "theatre id not mentioned"})
         }
 
-        const m = await show.find({
-            theatre: theatreid
+        const m = await show.findOne({
+            theatreId: theatreid
         }).populate("movie screen")
 
         if (!m) {
@@ -235,11 +261,11 @@ exports.getShowByCity = async function(req,res){
         }
 
         const s = await show.find().populate({
-            path: "theatre",
+            path: "theatreId",
             match: {"location.city": city}
-        }).populate("movie screen")
+        }).populate("movie screen theatreId")
 
-        const f = s.filter(s => s.theatre !== null)
+        const f = s.filter(s => s.theatreId !== null)
 
         return res.status(200).json({
             Total: f.length,
@@ -256,16 +282,17 @@ exports.getScreenByMovie = async function(req,res){
     try {
         const {movieid} = req.params
 
-        const s = await show.find({movie: movieid}).populate("theatre screen")
+        const s = await show.find({movie: movieid}).populate("screen")
 
         const screens = []
         const seen = new Set()
 
         for(let sh of s){
+            if (!sh.screen) continue;
             const screenid = sh.screen._id.toString()
             if(!seen.has(screenid)){
                 seen.add(screenid)
-                screens.push(show.screen)
+                screens.push(sh.screen)
             }
         }
 

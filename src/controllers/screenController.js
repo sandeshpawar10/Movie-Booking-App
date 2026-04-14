@@ -5,14 +5,14 @@ const {updatescreenValidation} = require("../validations/movieValidation")
 exports.addscreenFunction = async function(req,res){
     try {
 
-        const {theatre} = req.body
+        const {theatreId} = req.body
 
-        const theatreExists = await theatre.findById(theatre);
+        const theatreExists = await theatre.findById(theatreId);
         if (!theatreExists) {
             return res.status(404).json({ message: "Theatre not found" });
         }
 
-        const existingscreen = await screen.findOne({name, theatre})
+        const existingscreen = await screen.findOne({name: req.body.name, theatreId})
 
         if (existingscreen) {
             return res.status(404).json({ message: "Screen is already there in the theatre" });
