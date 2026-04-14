@@ -163,9 +163,9 @@ exports.getscreenByTheatreId = async function(req,res){
         }
 
         const m = await screen.find({
-            theatre: theatreid,
+            theatreId: theatreid,
             isActive: true
-        }).populate("theatre")
+        }).populate("theatreId")
 
         if (!m) {
             return res.status(404).json({
