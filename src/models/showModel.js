@@ -9,7 +9,7 @@ const showSchema = new Schema({
         index: true,
         required: true
     },
-    theatre: {
+    theatreId: {
         type: Schema.Types.ObjectId,
         ref: "theatre",
         index: true,
@@ -40,11 +40,15 @@ const showSchema = new Schema({
             required: true
         }
     },
-    seatsAvailble: {
+    bookedSeats: {
             type: [String],
             default: [],
             required: true
-        },
+    },
+    isActive: {
+        type: Boolean,
+        default: true
+    }
 },{
     timestamps: true
 })
