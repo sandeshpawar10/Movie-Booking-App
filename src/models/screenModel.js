@@ -6,7 +6,7 @@ const screenSchema = new Schema({
         type: String,
         required: true
     },
-    theatre: {
+    theatreId: {
         type: Schema.Types.ObjectId,
         ref: "theatre",
         required: true
@@ -25,17 +25,19 @@ const screenSchema = new Schema({
                 type: String,
                 required: true
             },
-            seats:{
-                seatNumber: Number,
-                type:{
-                    type: String,
-                    enum: ["silver","gold","platinum"]
-                },
-                isBooked: {
-                    type: Boolean,
-                    default: false
+            seats: [
+                {
+                    number: Number,
+                    type:{
+                        type: String,
+                        enum: ["silver","gold","platinum"]
+                    },
+                    isBooked: {
+                        type: Boolean,
+                        default: false
+                    }
                 }
-            }
+            ]
         }
     ],
     isActive: {
