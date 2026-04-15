@@ -1,0 +1,240 @@
+const booking = require("../models/bookingModel")
+const show = require("../models/showModel")
+const user = require("../models/userModel")
+
+exports.createBooking = async function(req,res){
+    try {
+        const { showId, seats} = req.body
+
+        const userId = req.user._id 
+
+        const u = await user.findById(userId)
+
+        if(!u){
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        const s = await show.findById(showId)
+
+        if(!s){
+            return res.status(404).json({ message: "Show not found" });
+        }
+
+        const isAvailable = seats.every(seat => !s.bookedSeats.includes(seat.seat))
+
+        if(!isAvailable){
+            return res.status(404).json({ message: "Seats are NOT AVAILABLE" });
+        }
+
+
+        let totalPrice = 0
+
+        // seats.forEach(s => {
+        //     if (s.price.silver === "silver") {
+        //         totalAmount += s.price.silver
+        //     } 
+        //     else if (s.price.gold === "gold") {
+        //         totalAmount += s.price.gold
+        //     } 
+        //     else if (s.price.platinum === "platinum") {
+        //         totalAmount += s.price.platinum
+        //     }
+        // })
+
+        seats.forEach(seat => {
+            totalPrice += s.price[seat.type]
+        })
+
+        const b = await booking.create({
+            user: userId,
+            show: showId,
+            totalAmount: totalPrice,
+            seats
+        })
+
+        s.bookedSeats.push(...seats.map(s => s.seat))
+
+        await b.save();
+
+        return res.status(201).json({
+                message: "Booking successful",
+                booking: b
+        });
+    } catch (error) {
+        return res.status(500).json({
+            message: "Internal Server Error",
+            error: error.message
+        })
+    }
+}
+
+exports.confirmBooking = async (req, res) => {
+    try {
+        const { bookingId } = req.params
+
+        const bookingData = await booking.findById(bookingId)
+
+        if (!bookingData) {
+            return res.status(404).json({ message: "Booking not found" })
+        }
+
+        bookingData.paymentStatus = "completed"
+        bookingData.bookingStatus = "confirmed"
+
+        await bookingData.save()
+
+        res.status(200).json({
+            message: "Booking confirmed",
+            booking: bookingData
+        })
+
+    } catch (err) {
+        res.status(500).json({
+            message: "Internal Server Error",
+            error: err.message
+        })
+    }
+}
+
+exports.getBookingById = async function(req,res){
+    try {
+        const { id } = req.params
+
+        if(!id){
+            return res.status(400).json({Status: "id not mentioned"})
+        }
+
+        const existingbooking = await booking.findById(id).populate("user show")
+
+        if(!existingbooking){
+            return res.status(409).json({
+                message: "Booking not done."
+            })
+        }
+
+        return res.status(200).json({Booking: existingbooking})
+
+    } catch (error) {
+        return res.status(500).json({
+            message: "Internal Server Error",
+            error: error.message
+        })
+    }
+}
+
+exports.getBookingByShowId = async function(req,res){
+    try {
+        const { showid } = req.params
+
+        if(!showid){
+            return res.status(400).json({Status: "id not mentioned"})
+        }
+
+        const existingbooking = await booking.findOne({
+            show: showid
+        }).populate("user")
+
+        if(!existingbooking){
+            return res.status(409).json({
+                message: "Booking not done"
+            })
+        }
+
+        return res.status(200).json({Booking: existingbooking})
+
+    } catch (error) {
+        return res.status(500).json({
+            message: "Internal Server Error",
+            error: error.message
+        })
+    }
+}
+
+exports.getBookingByUser = async function(req,res){
+    try {
+        const { userid } = req.params
+
+        if(!userid){
+            return res.status(400).json({Status: "id not mentioned"})
+        }
+
+        const existingbooking = await booking.findOne({
+            user: userid
+        }).populate("show")
+
+        if(!existingbooking){
+            return res.status(409).json({
+                message: "Booking not done."
+            })
+        }
+
+        return res.status(200).json({Booking: existingbooking})
+
+    } catch (error) {
+        return res.status(500).json({
+            message: "Internal Server Error",
+            error: error.message
+        })
+    }
+}
+
+exports.cancelBooking = async function(req,res){
+    try {
+        const { bookingid } = req.params
+
+        if(!bookingid){
+            return res.status(400).json({Status: "Booking id not mentioned"})
+        }
+
+        const book = await booking.findById(bookingid)
+
+        const s = await show.findById(book.show)
+
+        if (!book) {
+            return res.status(404).json({
+                message: "Booking not found"
+            })
+        }
+
+        //remove booked seats
+        s.bookedSeats = s.bookedSeats.filter(
+            seat => !book.seats.includes(seat)
+        );
+
+        await s.save()
+
+        book.bookingStatus = "cancelled"
+        book.paymentStatus = "failed"
+
+        await book.save()
+
+        await book.deleteOne()
+
+        // console.log(m)
+
+        return res.status(200).json({Status: "Booking Canceled successfully !!"})
+
+    } catch (error) {
+        return res.status(500).json({
+            message: "Internal Server Error",
+            error: error.message
+        })
+    }
+}
+
+exports.getAllBookings = async (req, res) => {
+    try {
+        const book = await booking.find()
+
+        return res.status(200).json({
+            message: "Bookings fetched successfully",
+            data: book
+        })
+
+    } catch (error) {
+        return res.status(500).json({
+            message: "Internal Server Error",
+            error: error.message
+        })
+    }
+}
