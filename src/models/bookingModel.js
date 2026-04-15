@@ -12,10 +12,19 @@ const bookingSchema = new Schema({
         ref: "show",
         required: true
     },
-    seats:{
-        type: [String],
-        required: true
-    },
+    seats: [
+        {
+            seat: {
+                type: String,
+                required: true
+            },
+            type: {
+                type: String,
+                enum: ["silver", "gold", "platinum"],
+                required: true
+            }
+        }
+    ],
     totalAmount:{
         type: Number,
         required: true
@@ -27,12 +36,12 @@ const bookingSchema = new Schema({
     },
     bookingStatus: {
         type: String,
-        enum: ["confirmed", "cancelled"],
-        default: "confirmed"
+        enum: ["pending", "confirmed", "cancelled"],
+        default: "pending"
     }
 },{
     timestamps: true
 })
 
 const booking = mongoose.model("booking",bookingSchema)
-module.exports = bookingSchema
+module.exports = booking
