@@ -7,6 +7,8 @@ const userRoute = require("./src/routes/userRoutes")
 const movieRoute = require("./src/routes/movieRoutes")
 const theatreroute = require("./src/routes/theatreRoutes.js")
 const showRoutes = require("./src/routes/showRoutes.js")
+const screenRoutes = require("./src/routes/screenRoutes.js")
+const bookingRoutes = require("./src/routes/bookingRoutes.js")
 const cookieParser = require("cookie-parser")
 dotenv.config({
     path:"./.env"
@@ -33,6 +35,8 @@ app.use('/',userRoute)
 app.use('/',movieRoute)
 app.use('/',theatreroute)
 app.use('/',showRoutes)
+app.use('/',screenRoutes)
+app.use('/',bookingRoutes)
 
 app.listen(port,()=>{
     console.log(`server started on port ${port}`)
