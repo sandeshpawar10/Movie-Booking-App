@@ -12,10 +12,14 @@ const bookingSchema = new Schema({
         ref: "show",
         required: true
     },
-    seats: [
+    bookedSeats: [
         {
-            seat: {
+            row: {
                 type: String,
+                required: true
+            },
+            number: {
+                type: Number,
                 required: true
             },
             type: {

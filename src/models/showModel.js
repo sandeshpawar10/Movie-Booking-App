@@ -45,6 +45,28 @@ const showSchema = new Schema({
             default: [],
             required: true
     },
+    seatLayout: [
+        {
+            row:{
+                type: String,
+                required: true
+            },
+            seats: [
+                {
+                    number: Number,
+                    type:{
+                        type: String,
+                        enum: ["silver","gold","platinum"],
+                        required: true
+                    },
+                    isBooked: {
+                        type: Boolean,
+                        default: false
+                    }
+                }
+            ]
+        }
+    ],
     isActive: {
         type: Boolean,
         default: true

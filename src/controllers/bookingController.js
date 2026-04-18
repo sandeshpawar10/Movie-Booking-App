@@ -68,33 +68,6 @@ exports.createBooking = async function(req,res){
     }
 }
 
-exports.confirmBooking = async (req, res) => {
-    try {
-        const { bookingId } = req.params
-
-        const bookingData = await booking.findById(bookingId)
-
-        if (!bookingData) {
-            return res.status(404).json({ message: "Booking not found" })
-        }
-
-        bookingData.paymentStatus = "completed"
-        bookingData.bookingStatus = "confirmed"
-
-        await bookingData.save()
-
-        res.status(200).json({
-            message: "Booking confirmed",
-            booking: bookingData
-        })
-
-    } catch (err) {
-        res.status(500).json({
-            message: "Internal Server Error",
-            error: err.message
-        })
-    }
-}
 
 exports.getBookingById = async function(req,res){
     try {
@@ -197,14 +170,27 @@ exports.cancelBooking = async function(req,res){
         }
 
         //remove booked seats
-        s.bookedSeats = s.bookedSeats.filter(
-            seat => !book.seats.includes(seat)
-        );
+        book.seats.forEach((bookedSeat) => {
+
+            const rowData = show.seatLayout.find(
+                (r) => r.row === bookedSeat.row
+            );
+
+            if (!rowData) return;
+
+            const seat = rowData.seats.find(
+                (s) => s.number === bookedSeat.number
+            );
+
+            if (!seat) return;
+
+            seat.isBooked = false; // 🔥 UNLOCK SEAT
+        });
 
         await s.save()
 
-        book.bookingStatus = "cancelled"
-        book.paymentStatus = "failed"
+        book.bookingStatus = "cancelled";
+        book.paymentStatus = "failed";
 
         await book.save()
 

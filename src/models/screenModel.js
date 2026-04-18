@@ -30,11 +30,8 @@ const screenSchema = new Schema({
                     number: Number,
                     type:{
                         type: String,
-                        enum: ["silver","gold","platinum"]
-                    },
-                    isBooked: {
-                        type: Boolean,
-                        default: false
+                        enum: ["silver","gold","platinum"],
+                        required: true
                     }
                 }
             ]
