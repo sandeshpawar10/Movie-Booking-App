@@ -1,4 +1,5 @@
 const Rozorpay = require("razorpay")
+const dotenv = require("dotenv");
 dotenv.config({
     path:"./.env"
 })

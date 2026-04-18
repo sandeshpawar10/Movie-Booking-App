@@ -12,10 +12,10 @@ exports.addshowsFunction = async function(req,res){
             return res.status(404).json({ message: "Theatre not found" });
         }
 
-        const screenExists = await show.findOne({screen: screen});
-        if (screenExists) {
-            return res.status(400).json({ message: "Screen is already in the use." });
-        }
+        // const screenExists = await show.findOne({screen: screen});
+        // if (screenExists) {
+        //     return res.status(400).json({ message: "Screen is already in the use." });
+        // }
 
         const m = await show.create(req.body)
 

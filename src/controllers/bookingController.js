@@ -1,6 +1,7 @@
 const booking = require("../models/bookingModel")
 const show = require("../models/showModel")
 const user = require("../models/userModel")
+const screen = require("../models/screenModel")
 
 exports.createBooking = async function(req,res){
     try {
@@ -20,39 +21,62 @@ exports.createBooking = async function(req,res){
             return res.status(404).json({ message: "Show not found" });
         }
 
-        const isAvailable = seats.every(seat => !s.bookedSeats.includes(seat.seat))
+        const screenId = await screen.findById(s.screen)
 
-        if(!isAvailable){
-            return res.status(404).json({ message: "Seats are NOT AVAILABLE" });
+        if (!screenId.seatLayout || screenId.seatLayout.length === 0) {
+            return res.status(400).json({ message: "Seat layout missing in screen" });
         }
 
+        //console.log(screenId.seatLayout)
+
+        // if(!screen){
+        //     return res.status(404).json({ message: "Screen not found" });
+        // }
+
+        const seatLayout = screenId.seatLayout.map(row => ({
+            row: row.row,
+            seats: row.seats.map(seat => ({
+                number: seat.number,
+                type: seat.type,
+                isBooked: false
+            }))
+        }));
 
         let totalPrice = 0
 
-        // seats.forEach(s => {
-        //     if (s.price.silver === "silver") {
-        //         totalAmount += s.price.silver
-        //     } 
-        //     else if (s.price.gold === "gold") {
-        //         totalAmount += s.price.gold
-        //     } 
-        //     else if (s.price.platinum === "platinum") {
-        //         totalAmount += s.price.platinum
-        //     }
-        // })
+        // console.log("Incoming seat:", seats);
+        // console.log("Seat Layout:", s.seatLayout);
 
-        seats.forEach(seat => {
-            totalPrice += s.price[seat.type]
-        })
+        for(let bookedSeat of seats){
+            const rowdata = s.seatLayout.find(
+                (r)=>r.row===bookedSeat.row
+            )
+            // console.log(rowdata)
+            if (!rowdata) {
+                return res.status(400).json({ message: "Invalid row" });
+            }
+            const seatdata = rowdata.seats.find(
+                (se)=>se.number===bookedSeat.number
+            )
+            if (!seatdata) {
+                return res.status(400).json({ message: "Invalid seat" });
+            }
+            if(seatdata.isBooked){
+                return res.status(400).json({ message: `The seat with the ${bookedSeat.row} and ${bookedSeat.number} seat number is already booked !`  });
+            }
+            totalPrice += s.price[seatdata.type];
+        }
+
+        await s.save();
 
         const b = await booking.create({
             user: userId,
             show: showId,
             totalAmount: totalPrice,
-            seats
+            bookedSeats: seats
         })
 
-        s.bookedSeats.push(...seats.map(s => s.seat))
+        // s.bookedSeats.push(...seats.map(s => s.seat))
 
         await b.save();
 
