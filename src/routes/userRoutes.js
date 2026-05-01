@@ -7,7 +7,7 @@ router.post('/user/login',controller.loginuser)
 router.post('/user/logout', verifyJWt,controller.logoutuser)
 router.get('/user/currentuser',verifyJWt,controller.getcurrentuser)
 router.get('/user/verifyemail/:verificationToken',controller.verifyEmail)
-router.post('/user/resendverifyemail',verifyJWt,controller.resendEmailVerification)
+router.post('/user/resendverifyemail',controller.resendEmailVerification)
 router.post('/user/refreshaccesstoken',controller.refreshaccesstoken)
 router.post('/user/forgotpassword',controller.forgotPasswordFunction)
 // router.get('/user/resetpassword/:resetToken', (req, res) => {
