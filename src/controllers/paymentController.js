@@ -72,15 +72,16 @@ exports.verifyPayment = async function(req,res){
                 (r)=>r.row===bookedSeat.row
             )
 
-            if(rowdata){
-                const seat = rowdata.seats.find(
-                    (se)=>se.row===bookedSeat.number
-                )
-            }
+            if (!rowData) throw new Error("Row not found");
 
-            if (seat) {
-                seat.isBooked = true; // 🔥 LOCK SEAT  
-            }
+
+
+            const seat = rowData.seats.find( (s) => s.number === bookedSeat.number );
+
+            if (!seat) throw new Error("Seat not found");
+
+
+            seat.isBooked = true;
         })
 
         book.bookingStatus = "confirmed"
