@@ -3,7 +3,7 @@ const {Schema} = require("mongoose")
 
 
 const showSchema = new Schema({
-    movie: {
+    movieId: {
         type: Schema.Types.ObjectId,
         ref: "movie",
         index: true,
@@ -15,7 +15,7 @@ const showSchema = new Schema({
         index: true,
         required: true
     },
-    screen: {
+    screenId: {
         type: Schema.Types.ObjectId,
         required: true,
         ref: "screen",
@@ -45,28 +45,28 @@ const showSchema = new Schema({
             default: [],
             required: true
     },
-    seatLayout: [
-        {
-            row:{
-                type: String,
-                required: true
-            },
-            seats: [
-                {
-                    number: Number,
-                    type:{
-                        type: String,
-                        enum: ["silver","gold","platinum"],
-                        required: true
-                    },
-                    isBooked: {
-                        type: Boolean,
-                        default: false
-                    }
-                }
-            ]
-        }
-    ],
+    // seatLayout: [
+    //     {
+    //         row:{
+    //             type: String,
+    //             required: true
+    //         },
+    //         seats: [
+    //             {
+    //                 number: Number,
+    //                 type:{
+    //                     type: String,
+    //                     enum: ["silver","gold","platinum"],
+    //                     required: true
+    //                 },
+    //                 isBooked: {
+    //                     type: Boolean,
+    //                     default: false
+    //                 }
+    //             }
+    //         ]
+    //     }
+    // ],
     isActive: {
         type: Boolean,
         default: true
