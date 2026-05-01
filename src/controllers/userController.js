@@ -154,12 +154,30 @@ exports.verifyEmail = async function(req,res){
 }
 
 exports.resendEmailVerification = async function(req,res){
-    const u = await user.findById(req.user._id)
-    if(!u){
-        return res.status(400).end("User not found")
+
+    const validationResult = await loginValidationFunction.safeParseAsync(req.body)
+
+    if(validationResult.error){
+        return res.status(400).json({Error: validationResult.error.format()})
     }
+
+    const {email, password} = validationResult.data
+
+    const u = await user.findOne({
+        email
+    })
+    if(!u){
+        return res.status(400).end("User is not registered")
+    }
+
     if(u.isEmailVerified){
-        return res.status(400).end("Email is already verified.")
+        return res.status(403).end("Your email is already verified !!");
+    }
+
+    const passwordValid = await u.isPasswordCorrect(password)
+    
+    if(!passwordValid){
+        return res.status(400).end("Invalid credentials")
     }
     const {token,hashtoken,tokenexpiry} = u.generateTemporaryToken()
 
