@@ -74,12 +74,9 @@ exports.verifyPayment = async function(req,res){
 
             if (!rowData) throw new Error("Row not found");
 
-
-
             const seat = rowData.seats.find( (s) => s.number === bookedSeat.number );
 
             if (!seat) throw new Error("Seat not found");
-
 
             seat.isBooked = true;
         })

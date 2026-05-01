@@ -1,34 +1,64 @@
 const show = require("../models/showModel")
 const theatre = require("../models/theatreModel")
+const screen = require("../models/screenModel")
+const movie = require("../models/movieModel")
 const {updateshowValidation} = require("../validations/movieValidation")
 
 exports.addshowsFunction = async function(req,res){
     try {
-        
-        const {theatreId, screen} = req.body
+        const { movieId, screenId, theatreId, startTime, price } = req.body;
 
-        const theatreExists = await theatre.findById(theatreId);
-        if (!theatreExists) {
+        const th = await theatre.findById(theatreId)
+
+        if (!th) {
             return res.status(404).json({ message: "Theatre not found" });
         }
 
-        // const screenExists = await show.findOne({screen: screen});
-        // if (screenExists) {
-        //     return res.status(400).json({ message: "Screen is already in the use." });
-        // }
+        const m = await movie.findById(movieId);
+        if (!m) {
+            return res.status(404).json({ message: "Movie not found" });
+        }
 
-        const m = await show.create(req.body)
+        const sc = await screen.findById(screenId);
+        if (!sc) {
+            return res.status(404).json({ message: "Screen not found" });
+        }
 
-        // console.log(m)
+        const existingShow = await show.findOne({
+            screenId: screenId,
+            startTime: new Date(startTime)
+        });
 
-        return res.status(201).json({Status: "Show added successfully !!", Data: m})
+        if (existingShow) {
+            return res.status(400).json({
+                message: "Show already exists for this screen at this time"
+            });
+        }
 
-    } catch (error) {
+        // ✅ 4. Create Show (NO seatLayout here)
+        const newShow = new show({
+            movieId: movieId,
+            screenId: screenId,
+            theatreId: theatreId,
+            startTime,
+            price,
+            bookedSeats: [] // initially empty
+        });
+
+        await newShow.save();
+
+        return res.status(201).json({
+            success: true,
+            message: "Show created successfully",
+            show: newShow
+        });
+
+  } catch (error) {
         return res.status(500).json({
             message: "Internal Server Error",
             error: error.message
-        })
-    }
+        });
+  }
 }
 
 exports.removeAllShows = async function(req,res){
@@ -88,10 +118,10 @@ exports.updateshowFunction = async function(req,res){
 
         
 
-        const {movie,theatre,screen,startTime,price,seatsAvailble} = validationResult.data
+        const {movieId,theatreId,screenId,startTime,price,bookedSeats} = validationResult.data
 
         const m = await show.findByIdAndUpdate(id,{
-            movie,theatre,screen,startTime,price,seatsAvailble
+            movieId,theatreId,screenId,startTime,price,bookedSeats
         })
 
         if (!m) {
@@ -161,8 +191,8 @@ exports.getShowByMovieId = async function(req,res){
         }
 
         const m = await show.find({
-            movie: movieid
-        }).populate("theatre screen")
+            movieId: movieid
+        }).populate("theatreId screenId")
 
         if (!m) {
             return res.status(404).json({
@@ -188,13 +218,13 @@ exports.getAvailableSeats = async function(req,res){
             return res.status(400).json({Status: "id not mentioned"})
         }
         
-        const s = await show.findById(id).populate("screen")
+        const s = await show.findById(id).populate("screenId")
 
         if(!s){
             return res.status(404).json({ message: "Show not found" });
         }
 
-        const layout = s.screen.seatLayout;
+        const layout = s.screenId.seatLayout;
 
         let availableSeats = [];
 
@@ -232,7 +262,7 @@ exports.getShowByTheatreId = async function(req,res){
 
         const m = await show.findOne({
             theatreId: theatreid
-        }).populate("movie screen")
+        }).populate("movieId screenId")
 
         if (!m) {
             return res.status(404).json({
@@ -263,7 +293,7 @@ exports.getShowByCity = async function(req,res){
         const s = await show.find().populate({
             path: "theatreId",
             match: {"location.city": city}
-        }).populate("movie screen theatreId")
+        }).populate("movieId screenId theatreId")
 
         const f = s.filter(s => s.theatreId !== null)
 
@@ -282,7 +312,7 @@ exports.getScreenByMovie = async function(req,res){
     try {
         const {movieid} = req.params
 
-        const s = await show.find({movie: movieid}).populate("screen")
+        const s = await show.find({movieId: movieid}).populate("screenId")
 
         const screens = []
         const seen = new Set()

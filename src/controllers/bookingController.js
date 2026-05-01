@@ -21,19 +21,25 @@ exports.createBooking = async function(req,res){
             return res.status(404).json({ message: "Show not found" });
         }
 
-        const screenId = await screen.findById(s.screen)
+        const screenid = await screen.findById(s.screenId)
 
-        if (!screenId.seatLayout || screenId.seatLayout.length === 0) {
+        if (!screenid) {
+            return res.status(404).json({ message: "Screen not found" });
+        }
+
+        //console.log(screenid.seatLayout)
+
+        if (!screenid.seatLayout || screenid.seatLayout.length === 0) {
             return res.status(400).json({ message: "Seat layout missing in screen" });
         }
 
-        //console.log(screenId.seatLayout)
+        
 
         // if(!screen){
         //     return res.status(404).json({ message: "Screen not found" });
         // }
 
-        const seatLayout = screenId.seatLayout.map(row => ({
+        const seatLayout = screenid.seatLayout.map(row => ({
             row: row.row,
             seats: row.seats.map(seat => ({
                 number: seat.number,
@@ -48,7 +54,7 @@ exports.createBooking = async function(req,res){
         // console.log("Seat Layout:", s.seatLayout);
 
         for(let bookedSeat of seats){
-            const rowdata = s.seatLayout.find(
+            const rowdata = screenid.seatLayout.find(
                 (r)=>r.row===bookedSeat.row
             )
             // console.log(rowdata)
@@ -185,7 +191,21 @@ exports.cancelBooking = async function(req,res){
 
         const book = await booking.findById(bookingid)
 
+        if (!book) {
+            return res.status(404).json({ message: "Booking not found" });
+        }
+
         const s = await show.findById(book.show)
+
+        if (!s) {
+            return res.status(404).json({ message: "Show not found" });
+        }
+
+        const screenid = await screen.findById(s.screenId)
+
+        if (!screenid) {
+            return res.status(404).json({ message: "Screen not found" });
+        }
 
         if (!book) {
             return res.status(404).json({
@@ -193,10 +213,12 @@ exports.cancelBooking = async function(req,res){
             })
         }
 
-        //remove booked seats
-        book.seats.forEach((bookedSeat) => {
+        //console.log(book.seats)
 
-            const rowData = show.seatLayout.find(
+        //remove booked seats
+        book.bookedSeats.forEach((bookedSeat) => {
+
+            const rowData = screenid.seatLayout.find(
                 (r) => r.row === bookedSeat.row
             );
 
