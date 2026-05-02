@@ -148,7 +148,7 @@ exports.getShowById = async function(req,res){
             return res.status(400).json({Status: "id not mentioned"})
         }
 
-        const existingShow = await show.findById(id).populate("theatreId screen")
+        const existingShow = await show.findById(id).populate("theatreId screenId")
 
         if(!existingShow){
             return res.status(409).json({
@@ -168,7 +168,7 @@ exports.getShowById = async function(req,res){
 
 exports.getAllShows = async function(req,res){
     try {
-        const s = await show.find().populate("movie theatre screen")
+        const s = await show.find().populate("movieId theatreId screenId")
 
         return res.status(200).json({
             Total: s.length,

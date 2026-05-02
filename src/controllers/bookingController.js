@@ -67,8 +67,8 @@ exports.createBooking = async function(req,res){
             if (!seatdata) {
                 return res.status(400).json({ message: "Invalid seat" });
             }
-            if(seatdata.isBooked){
-                return res.status(400).json({ message: `The seat with the ${bookedSeat.row} and ${bookedSeat.number} seat number is already booked !`  });
+            if (s.bookedSeats && s.bookedSeats.includes(`${bookedSeat.row}${bookedSeat.number}`)) {
+                return res.status(400).json({ message: `The seat ${bookedSeat.row}${bookedSeat.number} is already booked!`  });
             }
             totalPrice += s.price[seatdata.type];
         }

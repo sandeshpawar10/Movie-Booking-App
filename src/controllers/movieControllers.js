@@ -129,7 +129,7 @@ exports.getMovieFunction = async function(req,res){
             return res.status(400).json({Status: "id not mentioned"})
         }
 
-        const existingMovie = await movie.findOne(id)
+        const existingMovie = await movie.findById(id)
 
         if(!existingMovie){
             return res.status(409).json({

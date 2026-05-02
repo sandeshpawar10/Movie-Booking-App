@@ -39,7 +39,7 @@ exports.removetheatreFunction = async function(req,res){
             return res.status(400).json({Status: "id not mentioned"})
         }
 
-        const deletedtheatre = await theatre.findOneAndDelete(id)
+        const deletedtheatre = await theatre.findByIdAndDelete(id)
 
         if (!deletedtheatre) {
             return res.status(404).json({

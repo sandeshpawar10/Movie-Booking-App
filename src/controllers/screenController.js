@@ -120,7 +120,7 @@ exports.getscreenById = async function(req,res){
             return res.status(400).json({Status: "id not mentioned"})
         }
 
-        const existingscreen = await screen.findOne(id)
+        const existingscreen = await screen.findById(screenid)
 
         if(!existingscreen){
             return res.status(409).json({

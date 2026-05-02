@@ -68,17 +68,7 @@ exports.verifyPayment = async function(req,res){
             return res.status(404).json({ message: "Show not found" });
         }
         book.bookedSeats.forEach((bookedSeat)=>{
-            const rowdata = s.seatLayout.find(
-                (r)=>r.row===bookedSeat.row
-            )
-
-            if (!rowData) throw new Error("Row not found");
-
-            const seat = rowData.seats.find( (s) => s.number === bookedSeat.number );
-
-            if (!seat) throw new Error("Seat not found");
-
-            seat.isBooked = true;
+            s.bookedSeats.push(`${bookedSeat.row}${bookedSeat.number}`);
         })
 
         book.bookingStatus = "confirmed"
