@@ -8,7 +8,9 @@ const movieValidation = z.object({
     }),
     duration: z.number(),
     language: z.string(),
-
+    descrition: z.string().optional(),
+    genre: z.any().optional(),
+    poster: z.string().optional()
 })
 
 const titleValidation = z.object({
