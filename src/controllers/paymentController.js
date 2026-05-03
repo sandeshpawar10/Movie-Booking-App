@@ -54,14 +54,19 @@ exports.verifyPayment = async function(req,res){
             })
         }
 
+        const book = await booking.findById(bookingId)
+        if (!book) {
+            return res.status(404).json({ message: "Booking not found" });
+        }
+
         await trannsaction.create({
             bookingId,
+            userId: book.user,
+            amount: book.totalAmount,
             paymentMethod: "rozarpay",
             status: "success",
             transactionId: razorpay_payment_id
         })
-
-        const book = await booking.findById(bookingId)
 
         const s = await show.findById(book.show)
         if(!s){
