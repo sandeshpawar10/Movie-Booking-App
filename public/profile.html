@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile | CineMagic</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .profile-container {
+            max-width: 1000px;
+            margin: 100px auto 2rem;
+            padding: 2rem;
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 2rem;
+        }
+        .profile-sidebar {
+            background: var(--bg-card);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 2rem;
+            text-align: center;
+        }
+        .profile-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, var(--primary-color), #ff6b6b);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            margin: 0 auto 1.5rem;
+            color: white;
+            box-shadow: 0 10px 20px rgba(255,51,102,0.3);
+        }
+        .profile-info h3 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .profile-info p {
+            color: var(--text-muted);
+            margin-bottom: 1.5rem;
+        }
+        .profile-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .profile-nav button {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 1rem;
+            text-align: left;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .profile-nav button:hover, .profile-nav button.active {
+            background: rgba(255,255,255,0.05);
+            color: var(--primary-color);
+        }
+        .profile-content {
+            background: var(--bg-card);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 2.5rem;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        /* Forms */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-muted);
+        }
+        .form-control {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            background: rgba(0,0,0,0.2);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            color: white;
+            font-family: 'Outfit', sans-serif;
+            transition: all 0.3s;
+        }
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+        .btn-save {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.8rem 2rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        
+        /* Bookings List */
+        .booking-card {
+            background: rgba(0,0,0,0.2);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .booking-details h4 {
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+            color: var(--primary-color);
+        }
+        .booking-status {
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            background: rgba(77, 255, 136, 0.1);
+            color: #4dff88;
+        }
+
+        #msg-box {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            display: none;
+        }
+        .success { background: rgba(77, 255, 136, 0.1); color: #4dff88; border: 1px solid rgba(77, 255, 136, 0.3); }
+        .error { background: rgba(255, 77, 77, 0.1); color: #ff4d4d; border: 1px solid rgba(255, 77, 77, 0.3); }
+
+        @media (max-width: 768px) {
+            .profile-container { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">
+            <a href="index.html" style="color:var(--primary-color); text-decoration:none;"><i class="fa-solid fa-film"></i> CineMagic</a>
+        </div>
+        <div class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="#">Movies</a>
+            <a href="#">Theatres</a>
+        </div>
+        <div class="nav-auth">
+            <!-- Dynamically populated -->
+        </div>
+    </nav>
+
+    <div class="profile-container">
+        <div class="profile-sidebar">
+            <div class="profile-avatar">
+                <i class="fa-solid fa-user"></i>
+            </div>
+            <div class="profile-info">
+                <h3 id="user-name">Loading...</h3>
+                <p id="user-email">Loading...</p>
+            </div>
+            <div class="profile-nav">
+                <button class="active" onclick="switchTab('details', this)"><i class="fa-solid fa-address-card"></i> My Details</button>
+                <button onclick="switchTab('bookings', this)"><i class="fa-solid fa-ticket"></i> My Bookings</button>
+                <button onclick="switchTab('security', this)"><i class="fa-solid fa-shield-halved"></i> Security</button>
+            </div>
+        </div>
+
+        <div class="profile-content">
+            <!-- My Details Tab -->
+            <div id="tab-details" class="tab-content active">
+                <h2 style="margin-bottom: 1.5rem;">Account Details</h2>
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" id="profile-username" class="form-control" disabled>
+                </div>
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <input type="email" id="profile-email" class="form-control" disabled>
+                </div>
+                <div class="form-group">
+                    <label>Role</label>
+                    <input type="text" id="profile-role" class="form-control" disabled>
+                </div>
+            </div>
+
+            <!-- My Bookings Tab -->
+            <div id="tab-bookings" class="tab-content">
+                <h2 style="margin-bottom: 1.5rem;">My Bookings</h2>
+                <div id="bookings-container">
+                    <p style="color: var(--text-muted)">Loading bookings...</p>
+                </div>
+            </div>
+
+            <!-- Security Tab -->
+            <div id="tab-security" class="tab-content">
+                <h2 style="margin-bottom: 1.5rem;">Change Password</h2>
+                <div id="msg-box"></div>
+                <form id="password-form">
+                    <div class="form-group">
+                        <label>Current Password</label>
+                        <input type="password" id="old-password" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>New Password</label>
+                        <input type="password" id="new-password" class="form-control" required minlength="6">
+                    </div>
+                    <div class="form-group">
+                        <label>Confirm New Password</label>
+                        <input type="password" id="confirm-password" class="form-control" required minlength="6">
+                    </div>
+                    <button type="submit" class="btn-save">Update Password</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script>
+        // Check auth immediately
+        if (!Auth.isAuthenticated()) {
+            window.location.href = 'login.html';
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const user = Auth.getUser();
+            
+            // Populate details
+            document.getElementById('user-name').textContent = user.username;
+            document.getElementById('user-email').textContent = user.email;
+            
+            document.getElementById('profile-username').value = user.username;
+            document.getElementById('profile-email').value = user.email;
+            document.getElementById('profile-role').value = user.role.toUpperCase();
+
+            // Load bookings
+            fetchBookings();
+        });
+
+        function switchTab(tabId, btn) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.profile-nav button').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById(`tab-${tabId}`).classList.add('active');
+            btn.classList.add('active');
+        }
+
+        async function fetchBookings() {
+            const container = document.getElementById('bookings-container');
+            const user = Auth.getUser();
+            try {
+                // Fetching from backend mapping logic
+                const res = await Auth.fetchWithAuth(`/booking/my-bookings/${user._id}`);
+                if (!res.ok) throw new Error('Failed to fetch');
+                const data = await res.json();
+                
+                // Expecting array of bookings
+                const bookings = Array.isArray(data) ? data : (data.data || []);
+                
+                if (bookings.length === 0) {
+                    container.innerHTML = '<p style="color: var(--text-muted)">You have no bookings yet.</p>';
+                    return;
+                }
+
+                container.innerHTML = bookings.map(b => `
+                    <div class="booking-card">
+                        <div class="booking-details">
+                            <h4>Show ID: ${b.show}</h4>
+                            <p style="color: var(--text-muted); font-size: 0.9rem;">
+                                Seats: ${b.seats ? b.seats.join(', ') : 'N/A'} <br>
+                                Total Amount: ₹${b.totalamount || '0'}
+                            </p>
+                        </div>
+                        <div class="booking-status">${b.status || 'Confirmed'}</div>
+                    </div>
+                `).join('');
+
+            } catch (err) {
+                console.error(err);
+                container.innerHTML = '<p style="color: #ff4d4d">Error loading bookings.</p>';
+            }
+        }
+
+        document.getElementById('password-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const oldPassword = document.getElementById('old-password').value;
+            const newPassword = document.getElementById('new-password').value;
+            const confirmPassword = document.getElementById('confirm-password').value;
+            const msgBox = document.getElementById('msg-box');
+
+            if (newPassword !== confirmPassword) {
+                msgBox.className = 'error';
+                msgBox.textContent = 'New passwords do not match!';
+                msgBox.style.display = 'block';
+                return;
+            }
+
+            try {
+                const res = await Auth.fetchWithAuth('/user/changecurrentpassword', {
+                    method: 'POST',
+                    body: { oldPassword, newPassword }
+                });
+
+                if (!res.ok) {
+                    const txt = await res.text();
+                    throw new Error(txt || 'Password update failed');
+                }
+
+                msgBox.className = 'success';
+                msgBox.textContent = 'Password updated successfully!';
+                msgBox.style.display = 'block';
+                document.getElementById('password-form').reset();
+
+            } catch (err) {
+                msgBox.className = 'error';
+                msgBox.textContent = err.message;
+                msgBox.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>

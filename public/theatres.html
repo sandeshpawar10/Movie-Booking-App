@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Theatres | CineMagic</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .theatres-container {
+            max-width: 1200px;
+            margin: 100px auto 2rem;
+            padding: 2rem 5%;
+        }
+        
+        .page-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+        .page-header h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+        }
+
+        .theatres-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .theatre-card {
+            background: var(--bg-card);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 2rem;
+            transition: all 0.3s;
+        }
+
+        .theatre-card:hover {
+            transform: translateY(-10px);
+            border-color: rgba(255,51,102,0.3);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.4);
+        }
+
+        .t-name {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .t-meta {
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.95rem;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">
+            <a href="index.html" style="color:var(--primary-color); text-decoration:none;"><i class="fa-solid fa-film"></i> CineMagic</a>
+        </div>
+        <div class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="index.html#movies">Movies</a>
+            <a href="theatres.html" class="active">Theatres</a>
+        </div>
+        <div class="nav-auth"></div>
+    </nav>
+
+    <div class="theatres-container">
+        <div class="page-header">
+            <h1>Partner Theatres</h1>
+            <p style="color:var(--text-muted); font-size:1.1rem;">Find a premium cinema experience near you</p>
+        </div>
+        
+        <div class="theatres-grid" id="theatres-grid">
+            <div class="loading-spinner"></div>
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script>
+        async function fetchTheatres() {
+            try {
+                const res = await fetch('/theatre/all-theatre');
+                if (!res.ok) throw new Error('Failed to fetch');
+                const data = await res.json();
+                
+                const theatres = data.Theatres || data.data || data;
+                
+                if (theatres.length === 0) {
+                    document.getElementById('theatres-grid').innerHTML = '<p style="grid-column:1/-1;text-align:center;">No theatres found.</p>';
+                    return;
+                }
+
+                document.getElementById('theatres-grid').innerHTML = theatres.map(t => `
+                    <div class="theatre-card">
+                        <div class="t-name"><i class="fa-solid fa-building"></i> ${t.name}</div>
+                        <div class="t-meta"><i class="fa-solid fa-location-dot"></i> ${t.location?.city || t.city || 'Unknown City'}</div>
+                        <div class="t-meta"><i class="fa-solid fa-map-pin"></i> ${t.location?.state || t.state || 'Unknown State'}</div>
+                    </div>
+                `).join('');
+
+            } catch (error) {
+                console.error(error);
+                document.getElementById('theatres-grid').innerHTML = '<p style="color:#ff4d4d; grid-column:1/-1;text-align:center;">Error loading theatres.</p>';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', fetchTheatres);
+    </script>
+</body>
+</html>

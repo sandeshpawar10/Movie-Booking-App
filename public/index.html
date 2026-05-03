@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CineMagic | Premium Movie Booking</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="nav-brand">
+            <i class="fa-solid fa-film"></i> CineMagic
+        </div>
+        <div class="nav-links">
+            <a href="#" class="active">Home</a>
+            <a href="#">Movies</a>
+            <a href="#">Theatres</a>
+        </div>
+        <div class="nav-auth">
+            <button class="btn-login">Login</button>
+            <button class="btn-signup">Sign Up</button>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="hero">
+        <div class="hero-content">
+            <h1>Experience Cinema Like Never Before</h1>
+            <p>Book tickets for the latest blockbusters in premium theaters near you.</p>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container">
+        <div class="section-header">
+            <h2>Now Showing</h2>
+            <div style="display:flex; gap:1rem; align-items:center;">
+                <div class="search-bar" style="position:relative;">
+                    <input type="text" id="movie-search" placeholder="Search movies..." style="padding:0.6rem 1rem 0.6rem 2.5rem; border-radius:30px; border:1px solid var(--glass-border); background:rgba(0,0,0,0.2); color:white; width:250px;">
+                    <i class="fa-solid fa-search" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--text-muted);"></i>
+                </div>
+                <div class="filters">
+                    <button class="filter-btn active">All</button>
+                    <button class="filter-btn">Action</button>
+                    <button class="filter-btn">Comedy</button>
+                    <button class="filter-btn">Drama</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="movies-grid" id="movies-container">
+            <!-- Movie cards will be dynamically injected here -->
+            <div class="loading-spinner"></div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2026 CineMagic. All rights reserved.</p>
+    </footer>
+
+    <script src="js/auth.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

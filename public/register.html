@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register | CineMagic</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .auth-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 6rem 2rem 2rem 2rem; /* space for navbar */
+            background: linear-gradient(to bottom, rgba(15, 15, 19, 0.8), var(--bg-dark)), url('https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=2000&auto=format&fit=crop') center/cover;
+        }
+        .auth-box {
+            background: var(--bg-card);
+            border: 1px solid var(--glass-border);
+            padding: 3rem;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 450px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+            backdrop-filter: blur(10px);
+        }
+        .auth-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .auth-header h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        .form-group {
+            margin-bottom: 1.2rem;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+        .form-control {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            background: rgba(0,0,0,0.2);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            color: white;
+            font-family: 'Outfit', sans-serif;
+            transition: all 0.3s;
+        }
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 10px rgba(255,51,102,0.2);
+        }
+        .auth-btn {
+            width: 100%;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 1rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1rem;
+            margin-top: 1rem;
+            transition: all 0.3s;
+        }
+        .auth-btn:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+        }
+        .auth-links {
+            text-align: center;
+            margin-top: 1.5rem;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+        .auth-links a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+        #msg-box {
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+            text-align: center;
+            display: none;
+            padding: 0.8rem;
+            border-radius: 8px;
+        }
+        .error { background: rgba(255, 77, 77, 0.1); color: #ff4d4d; border: 1px solid rgba(255, 77, 77, 0.3); }
+        .success { background: rgba(77, 255, 136, 0.1); color: #4dff88; border: 1px solid rgba(77, 255, 136, 0.3); }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">
+            <a href="index.html" style="color:var(--primary-color); text-decoration:none;"><i class="fa-solid fa-film"></i> CineMagic</a>
+        </div>
+    </nav>
+
+    <div class="auth-container">
+        <div class="auth-box">
+            <div class="auth-header">
+                <h2>Join CineMagic</h2>
+                <p style="color: var(--text-muted)">Create an account to book tickets</p>
+            </div>
+            
+            <div id="msg-box"></div>
+
+            <form id="register-form">
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" id="username" class="form-control" required placeholder="John Doe">
+                </div>
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <input type="email" id="email" class="form-control" required placeholder="name@example.com">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="password" class="form-control" required minlength="6" placeholder="Create password">
+                </div>
+                <div class="form-group">
+                    <label>Role</label>
+                    <select id="role" class="form-control">
+                        <option value="user">User</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+                <button type="submit" class="auth-btn">Create Account</button>
+            </form>
+
+            <div class="auth-links">
+                Already have an account? <a href="login.html">Login</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script>
+        document.getElementById('register-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const role = document.getElementById('role').value;
+            
+            const msgBox = document.getElementById('msg-box');
+            const btn = document.querySelector('.auth-btn');
+            
+            try {
+                btn.textContent = 'Creating...';
+                btn.disabled = true;
+                
+                const response = await Auth.register(username, email, password, role);
+                
+                msgBox.className = 'success';
+                msgBox.textContent = response.message || 'Registration successful! Please check your email to verify.';
+                msgBox.style.display = 'block';
+                document.getElementById('register-form').reset();
+                
+            } catch (err) {
+                msgBox.className = 'error';
+                msgBox.textContent = err.message || 'An error occurred during registration.';
+                msgBox.style.display = 'block';
+            } finally {
+                btn.textContent = 'Create Account';
+                btn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>

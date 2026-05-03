@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movie Details | CineMagic</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .movie-header {
+            margin-top: 80px;
+            padding: 4rem 5%;
+            background-size: cover;
+            background-position: center;
+            position: relative;
+            display: flex;
+            gap: 3rem;
+            align-items: center;
+        }
+        .movie-header::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(to right, var(--bg-dark) 20%, rgba(15,15,19,0.7) 100%);
+            z-index: 0;
+        }
+        .movie-poster-large {
+            width: 300px;
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+            z-index: 1;
+            border: 1px solid var(--glass-border);
+        }
+        .movie-info-large {
+            z-index: 1;
+            max-width: 800px;
+        }
+        .movie-info-large h1 {
+            font-size: 3.5rem;
+            margin-bottom: 1rem;
+        }
+        .meta-tags {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+        .tag {
+            background: rgba(255,255,255,0.1);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            backdrop-filter: blur(5px);
+            border: 1px solid var(--glass-border);
+        }
+        .movie-desc-large {
+            font-size: 1.1rem;
+            color: #d0d0d0;
+            line-height: 1.6;
+            margin-bottom: 2rem;
+        }
+        
+        .shows-section {
+            padding: 4rem 5%;
+            max-width: 1250px;
+            margin: 0 auto;
+        }
+        .theatre-card {
+            background: var(--bg-card);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            transition: all 0.3s;
+        }
+        .theatre-card:hover {
+            border-color: rgba(255,51,102,0.3);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        .theatre-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--glass-border);
+        }
+        .theatre-info h3 {
+            font-size: 1.5rem;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .show-times {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        .show-time-btn {
+            background: transparent;
+            border: 1px solid var(--primary-color);
+            color: var(--primary-color);
+            padding: 0.8rem 1.5rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .show-time-btn:hover {
+            background: var(--primary-color);
+            color: white;
+            box-shadow: 0 0 15px rgba(255,51,102,0.4);
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">
+            <a href="index.html" style="color:var(--primary-color); text-decoration:none;"><i class="fa-solid fa-film"></i> CineMagic</a>
+        </div>
+        <div class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="index.html#movies" class="active">Movies</a>
+            <a href="theatres.html">Theatres</a>
+        </div>
+        <div class="nav-auth"></div>
+    </nav>
+
+    <div id="movie-content">
+        <!-- Injected via JS -->
+        <div class="loading-spinner" style="margin-top:150px"></div>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const movieId = urlParams.get('id');
+
+        if (!movieId) {
+            window.location.href = 'index.html';
+        }
+
+        async function fetchMovieDetails() {
+            try {
+                // Handle mock data
+                if (movieId.startsWith('m')) {
+                    const fallback = {
+                        "m1": { title: "Dune: Part Two", duration: 166, language: "English", genre: ["Action", "Sci-Fi", "Drama"], poster: "https://m.media-amazon.com/images/M/MV5BODdjMjM3ZGItMThiYS00MTExNDgwZjQtYjc2ZmRhNWFiMDM0XkEyXkFqcGdeQXVyMTA1NjE5MTAz._V1_FMjpg_UX1000_.jpg", description: "Paul Atreides unites with Chani and the Fremen while on a warpath of revenge against the conspirators who destroyed his family." },
+                        "m2": { title: "Deadpool & Wolverine", duration: 127, language: "English", genre: ["Action", "Comedy"], poster: "https://m.media-amazon.com/images/M/MV5BZTU5NDgyYmQtZWFmZi00OWZiLTgwMzMtMzhjOTRlYmU3NWNhXkEyXkFqcGdeQXVyMTUzMTg2ODkz._V1_FMjpg_UX1000_.jpg" },
+                        "m3": { title: "Inside Out 2", duration: 96, language: "English", genre: ["Animation", "Comedy", "Family"], poster: "https://m.media-amazon.com/images/M/MV5BYWNiMmNlNmQtZTI2MS00MzhlLWEzOTEtZGZkMWE0NDc4MTFiXkEyXkFqcGdeQXVyMDM2NDM2MQ@@._V1_FMjpg_UX1000_.jpg" },
+                        "m4": { title: "The Fall Guy", duration: 126, language: "English", genre: ["Action", "Comedy"], poster: "https://m.media-amazon.com/images/M/MV5BMjA5ZjA3NjktN2EyYS00YjFlLTlkYTEtY2Y4NzI4NWUwMGU1XkEyXkFqcGdeQXVyMTUzMTg2ODkz._V1_FMjpg_UX1000_.jpg" }
+                    };
+                    renderMovie(fallback[movieId], []);
+                    return;
+                }
+
+                // Fetch movie details
+                const res = await fetch(`/get-movie/${movieId}`);
+                if (!res.ok) throw new Error('Movie not found');
+                const data = await res.json();
+                const movie = data.Movie || data.movie || data.data || data;
+
+                // Fetch shows for this movie
+                const showsRes = await fetch(`/show/show-by-movieId/${movieId}`);
+                let showsData = [];
+                let showsError = null;
+                if (showsRes.ok) {
+                    const parsed = await showsRes.json();
+                    showsData = Array.isArray(parsed) ? parsed : (parsed.Show || parsed.shows || parsed.data || []);
+                } else {
+                    showsError = await showsRes.text();
+                }
+
+                renderMovie(movie, showsData, showsError);
+            } catch (err) {
+                console.error(err);
+                document.getElementById('movie-content').innerHTML = `
+                    <div style="text-align:center; padding:150px 20px;">
+                        <h2 style="color:#ff4d4d">Error loading movie details.</h2>
+                        <a href="index.html" class="btn-signup" style="text-decoration:none; display:inline-block; margin-top:20px;">Go Back</a>
+                    </div>
+                `;
+            }
+        }
+
+        function renderMovie(movie, shows, showsError) {
+            let posterUrl = 'https://images.unsplash.com/photo-1485846234645-a62644f84728?q=80&w=1000&auto=format&fit=crop';
+            if (movie.poster) {
+                if (movie.poster.startsWith('http') || movie.poster.startsWith('data:')) {
+                    posterUrl = movie.poster;
+                } else {
+                    posterUrl = `/images/${movie.poster}`;
+                }
+            }
+
+            const genres = (movie.genre || []).map(g => `<span class="tag">${g}</span>`).join('');
+            const desc = movie.descrition || movie.description || 'No description available.';
+
+            let showsHTML = '';
+            
+            if (showsError) {
+                showsHTML = `<p style="color: #ff4d4d; font-size:1.2rem; text-align:center;">Failed to load shows: ${showsError}</p>`;
+            } else if (shows.length === 0) {
+                showsHTML = '<p style="color: var(--text-muted); font-size:1.2rem; text-align:center;">No shows currently available for this movie.</p>';
+            } else {
+                // Group shows by Theatre
+                const theatreMap = {};
+                shows.forEach(show => {
+                    const theatreObj = show.theatreId || show.theatre;
+                    if (!theatreObj) return; // skip if no theatre data
+                    
+                    const tId = typeof theatreObj === 'object' ? theatreObj._id : theatreObj;
+                    const tName = typeof theatreObj === 'object' ? theatreObj.name : 'Theatre ID: ' + tId;
+                    
+                    if (!theatreMap[tId]) {
+                        theatreMap[tId] = { name: tName, shows: [] };
+                    }
+                    theatreMap[tId].shows.push(show);
+                });
+
+                for (const tId in theatreMap) {
+                    const t = theatreMap[tId];
+                    const times = t.shows.map(s => {
+                        const dateObj = new Date(s.startTime || s.date);
+                        const timeString = dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                        const dateString = dateObj.toLocaleDateString();
+                        return `<button class="show-time-btn" onclick="bookShow('${s._id}')">${dateString} ${timeString}</button>`;
+                    }).join('');
+
+                    showsHTML += `
+                        <div class="theatre-card">
+                            <div class="theatre-info">
+                                <h3><i class="fa-solid fa-building"></i> ${t.name}</h3>
+                            </div>
+                            <div class="show-times">
+                                ${times}
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+
+            document.getElementById('movie-content').innerHTML = `
+                <div class="movie-header" style="background-image: url('${posterUrl}')">
+                    <img src="${posterUrl}" alt="${movie.title}" class="movie-poster-large">
+                    <div class="movie-info-large">
+                        <h1>${movie.title}</h1>
+                        <div class="meta-tags">
+                            <span class="tag"><i class="fa-regular fa-clock"></i> ${movie.duration || '120'} min</span>
+                            <span class="tag"><i class="fa-solid fa-language"></i> ${movie.language || 'English'}</span>
+                            ${genres}
+                        </div>
+                        <p class="movie-desc-large">${desc}</p>
+                    </div>
+                </div>
+
+                <div class="shows-section">
+                    <h2 style="font-size:2.5rem; margin-bottom:2rem; border-bottom: 2px solid var(--primary-color); display:inline-block; padding-bottom:0.5rem;">Available Shows</h2>
+                    ${showsHTML}
+                </div>
+            `;
+        }
+
+        window.bookShow = function(showId) {
+            if (!Auth.isAuthenticated()) {
+                alert('Please login to book tickets!');
+                window.location.href = 'login.html';
+                return;
+            }
+            window.location.href = `book.html?showId=${showId}`;
+        }
+
+        document.addEventListener('DOMContentLoaded', fetchMovieDetails);
+    </script>
+</body>
+</html>

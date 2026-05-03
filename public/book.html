@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Seats | CineMagic</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .booking-container {
+            max-width: 1200px;
+            margin: 100px auto 2rem;
+            padding: 2rem;
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 3rem;
+        }
+        
+        .screen-container {
+            background: var(--bg-card);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 3rem 2rem;
+            text-align: center;
+        }
+        
+        .screen-curve {
+            height: 60px;
+            width: 100%;
+            margin-bottom: 3rem;
+            border-top: 5px solid var(--primary-color);
+            border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+            position: relative;
+            box-shadow: 0 -20px 40px rgba(255,51,102,0.1);
+        }
+        .screen-curve::after {
+            content: 'SCREEN';
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: var(--text-muted);
+            letter-spacing: 5px;
+            font-size: 0.9rem;
+        }
+
+        .seats-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .seat-row {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .row-label {
+            width: 30px;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .seat {
+            width: 35px;
+            height: 35px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 8px 8px 4px 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+        }
+
+        .seat:hover:not(.booked) {
+            transform: translateY(-2px);
+            background: rgba(255,255,255,0.2);
+        }
+
+        .seat.selected {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+            box-shadow: 0 0 10px rgba(255,51,102,0.5);
+        }
+
+        .seat.booked {
+            background: #2a2a35;
+            border-color: #2a2a35;
+            color: #555;
+            cursor: not-allowed;
+        }
+
+        .seat-legend {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--glass-border);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .legend-box {
+            width: 20px; height: 20px;
+            border-radius: 4px;
+        }
+
+        .summary-card {
+            background: var(--bg-card);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 2rem;
+            height: fit-content;
+            position: sticky;
+            top: 100px;
+        }
+
+        .summary-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--glass-border);
+            padding-bottom: 1rem;
+        }
+
+        .summary-details p {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+            color: var(--text-muted);
+        }
+        .summary-details p span { color: white; font-weight: 600; }
+
+        .total-price {
+            font-size: 1.5rem;
+            font-weight: 800;
+            display: flex;
+            justify-content: space-between;
+            margin: 2rem 0;
+            padding-top: 1rem;
+            border-top: 1px dashed var(--glass-border);
+        }
+
+        .btn-pay {
+            width: 100%;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 1rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn-pay:hover:not(:disabled) {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+        }
+        .btn-pay:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        @media (max-width: 900px) {
+            .booking-container { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">
+            <a href="index.html" style="color:var(--primary-color); text-decoration:none;"><i class="fa-solid fa-film"></i> CineMagic</a>
+        </div>
+        <div class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="index.html#movies">Movies</a>
+        </div>
+        <div class="nav-auth"></div>
+    </nav>
+
+    <div id="msg-overlay" style="display:none; position:fixed; top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8); z-index:2000; align-items:center; justify-content:center;">
+        <div style="background:var(--bg-card); padding:3rem; border-radius:20px; text-align:center; border:1px solid var(--primary-color);">
+            <i class="fa-solid fa-circle-check" style="color:#4dff88; font-size:4rem; margin-bottom:1rem;"></i>
+            <h2>Booking Successful!</h2>
+            <p style="color:var(--text-muted); margin:1rem 0 2rem;">Your tickets have been booked.</p>
+            <button onclick="window.location.href='profile.html'" class="btn-pay" style="width:auto; padding:0.8rem 2rem;">View Bookings</button>
+        </div>
+    </div>
+
+    <div class="booking-container" id="main-container">
+        <div style="grid-column: 1/-1; text-align:center;">
+            <div class="loading-spinner"></div>
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const showId = urlParams.get('showId');
+
+        if (!showId) {
+            window.location.href = 'index.html';
+        }
+
+        let currentShow = null;
+        let currentScreen = null;
+        let selectedSeats = []; // Array of {row, number, type, price}
+
+        async function initBooking() {
+            if (!Auth.isAuthenticated()) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            try {
+                // Fetch show details
+                const showRes = await fetch(`/show/show-by-id/${showId}`);
+                if (!showRes.ok) throw new Error('Show not found');
+                const showData = await showRes.json();
+                currentShow = showData.Show || showData.show || showData;
+
+                // Fetch screen layout to render seats properly
+                let screenId = currentShow.screenId;
+                if (typeof currentShow.screenId === 'object' && currentShow.screenId !== null) screenId = currentShow.screenId._id;
+                else if (currentShow.screen) screenId = currentShow.screen._id || currentShow.screen;
+                
+                const screenRes = await fetch(`/screen/screen-by-id/${screenId}`);
+                if (screenRes.ok) {
+                    const scData = await screenRes.json();
+                    currentScreen = scData.Screen || scData.screen || scData;
+                } else {
+                    throw new Error('Screen layout not found');
+                }
+
+                renderSeatLayout();
+
+            } catch (err) {
+                console.error(err);
+                document.getElementById('main-container').innerHTML = `
+                    <div style="grid-column:1/-1; text-align:center;">
+                        <h2 style="color:#ff4d4d">Error loading seating layout.</h2>
+                        <a href="index.html" class="btn-pay" style="width:auto; display:inline-block; margin-top:20px; text-decoration:none;">Go Back</a>
+                    </div>
+                `;
+            }
+        }
+
+        function renderSeatLayout() {
+            const container = document.getElementById('main-container');
+            const layout = currentScreen.seatLayout;
+            
+            // Format show time
+            const d = new Date(currentShow.startTime || currentShow.date);
+            const showTime = d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+
+            let rowsHTML = '';
+            layout.forEach(r => {
+                let seatsHTML = r.seats.map(s => {
+                    const isBooked = s.isBooked || (currentShow.bookedSeats && currentShow.bookedSeats.includes(`${r.row}${s.number}`));
+                    const seatClass = isBooked ? 'seat booked' : 'seat';
+                    return `<div class="${seatClass}" data-row="${r.row}" data-number="${s.number}" data-type="${s.type}" onclick="toggleSeat(this, ${isBooked})">${s.number}</div>`;
+                }).join('');
+
+                rowsHTML += `
+                    <div class="seat-row">
+                        <div class="row-label">${r.row}</div>
+                        ${seatsHTML}
+                    </div>
+                `;
+            });
+
+            container.innerHTML = `
+                <div class="screen-container">
+                    <div class="screen-curve"></div>
+                    <div class="seats-grid">
+                        ${rowsHTML}
+                    </div>
+                    <div class="seat-legend">
+                        <div class="legend-item">
+                            <div class="legend-box" style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2);"></div> Available
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-box" style="background:var(--primary-color);"></div> Selected
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-box" style="background:#2a2a35;"></div> Booked
+                        </div>
+                    </div>
+                </div>
+
+                <div class="summary-card">
+                    <h3>Booking Summary</h3>
+                    <div class="summary-details">
+                        <p>Movie: <span>${currentShow.movieId.title || 'Movie'}</span></p>
+                        <p>Theatre: <span>${currentShow.theatreId.name || 'Theatre'}</span></p>
+                        <p>Time: <span>${showTime}</span></p>
+                        <p>Seats: <span id="selected-seats-list">None</span></p>
+                    </div>
+                    <div class="total-price">
+                        Total Amount: <span id="total-amount">₹0</span>
+                    </div>
+                    <button class="btn-pay" id="pay-btn" disabled onclick="processBooking()">Pay & Book</button>
+                    <p id="error-msg" style="color:#ff4d4d; margin-top:10px; font-size:0.9rem; display:none;"></p>
+                </div>
+            `;
+        }
+
+        function toggleSeat(elem, isBooked) {
+            if (isBooked) return;
+
+            const row = elem.getAttribute('data-row');
+            const number = parseInt(elem.getAttribute('data-number'));
+            const type = elem.getAttribute('data-type');
+            
+            // Get price from show object
+            let seatPrice = 100; // fallback
+            if (currentShow.price && currentShow.price[type]) {
+                seatPrice = currentShow.price[type];
+            }
+
+            const seatId = `${row}${number}`;
+            const index = selectedSeats.findIndex(s => s.id === seatId);
+
+            if (index > -1) {
+                // Deselect
+                selectedSeats.splice(index, 1);
+                elem.classList.remove('selected');
+            } else {
+                // Select
+                selectedSeats.push({ id: seatId, row, number, type, price: seatPrice });
+                elem.classList.add('selected');
+            }
+
+            updateSummary();
+        }
+
+        function updateSummary() {
+            const listEl = document.getElementById('selected-seats-list');
+            const amountEl = document.getElementById('total-amount');
+            const btn = document.getElementById('pay-btn');
+
+            if (selectedSeats.length === 0) {
+                listEl.textContent = 'None';
+                amountEl.textContent = '₹0';
+                btn.disabled = true;
+                return;
+            }
+
+            listEl.textContent = selectedSeats.map(s => s.id).join(', ');
+            const total = selectedSeats.reduce((acc, curr) => acc + curr.price, 0);
+            amountEl.textContent = `₹${total}`;
+            btn.disabled = false;
+        }
+
+        async function processBooking() {
+            const btn = document.getElementById('pay-btn');
+            const errMsg = document.getElementById('error-msg');
+            btn.disabled = true;
+            btn.textContent = 'Processing...';
+            errMsg.style.display = 'none';
+
+            // Structure expected by backend: { showId, seats: [{row, number}, ...] }
+            const payload = {
+                showId: showId,
+                seats: selectedSeats.map(s => ({ row: s.row, number: s.number }))
+            };
+
+            try {
+                // 1. Create booking
+                const res = await Auth.fetchWithAuth('/booking/create-booking', {
+                    method: 'POST',
+                    body: payload
+                });
+
+                if (!res.ok) {
+                    const txt = await res.text();
+                    throw new Error(txt || 'Booking failed');
+                }
+                
+                const bookingData = await res.json();
+                const bookingId = bookingData.booking._id;
+
+                // 2. Create Razorpay order
+                const orderRes = await Auth.fetchWithAuth('/payment/create-order', {
+                    method: 'POST',
+                    body: { bookingid: bookingId }
+                });
+
+                if (!orderRes.ok) throw new Error('Failed to create payment order');
+                const orderData = await orderRes.json();
+                const order = orderData.order;
+
+                // 3. Open Razorpay Checkout
+                const options = {
+                    key: "rzp_test_YOUR_KEY_HERE", // Replace with your actual Razorpay Key ID
+                    amount: order.amount,
+                    currency: order.currency,
+                    name: "CineMagic",
+                    description: "Movie Ticket Booking",
+                    order_id: order.id,
+                    handler: async function (response) {
+                        try {
+                            btn.textContent = 'Verifying...';
+                            // 4. Verify Payment
+                            const verifyRes = await Auth.fetchWithAuth('/payment/veirfy-payment', {
+                                method: 'POST',
+                                body: {
+                                    razorpay_order_id: response.razorpay_order_id,
+                                    razorpay_payment_id: response.razorpay_payment_id,
+                                    razorpay_signature: response.razorpay_signature,
+                                    bookingId: bookingId
+                                }
+                            });
+
+                            if (!verifyRes.ok) throw new Error('Payment verification failed');
+
+                            document.getElementById('msg-overlay').style.display = 'flex';
+                        } catch (err) {
+                            errMsg.textContent = err.message;
+                            errMsg.style.display = 'block';
+                            btn.disabled = false;
+                            btn.textContent = 'Pay & Book';
+                        }
+                    },
+                    prefill: {
+                        name: Auth.getUser().username,
+                        email: Auth.getUser().email
+                    },
+                    theme: {
+                        color: "#ff3366"
+                    }
+                };
+
+                const rzp = new window.Razorpay(options);
+                rzp.on('payment.failed', function (response){
+                    errMsg.textContent = "Payment Failed: " + response.error.description;
+                    errMsg.style.display = 'block';
+                    btn.disabled = false;
+                    btn.textContent = 'Pay & Book';
+                });
+                rzp.open();
+                
+            } catch (err) {
+                errMsg.textContent = err.message;
+                errMsg.style.display = 'block';
+                btn.disabled = false;
+                btn.textContent = 'Pay & Book';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', initBooking);
+    </script>
+</body>
+</html>
