@@ -374,10 +374,10 @@
             btn.textContent = 'Processing...';
             errMsg.style.display = 'none';
 
-            // Structure expected by backend: { showId, seats: [{row, number}, ...] }
+            // Structure expected by backend: { showId, seats: [{row, number, type}, ...] }
             const payload = {
                 showId: showId,
-                seats: selectedSeats.map(s => ({ row: s.row, number: s.number }))
+                seats: selectedSeats.map(s => ({ row: s.row, number: s.number, type: s.type }))
             };
 
             try {
