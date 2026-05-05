@@ -80,6 +80,7 @@ exports.verifyPayment = async function(req,res){
         book.paymentStatus = "completed"
 
         await book.save()
+        await s.save()
 
          res.status(200).json({
             message: "Payment verified & booking confirmed"
