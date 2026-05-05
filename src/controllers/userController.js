@@ -254,7 +254,7 @@ exports.forgotPasswordFunction = async function(req,res){
         subject: "Reset password.",
         mailgenContent: forgotPassowrdmailcontent(
             u.username,
-            `${req.protocol}://${req.get("host")}/user/resetpassword/${token}`
+            `${req.protocol}://${req.get("host")}/reset-password.html?token=${token}`
         )
     })
 

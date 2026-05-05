@@ -120,6 +120,46 @@ const Auth = {
             window.location.href = '/index.html';
         }
     },
+
+    // Forgot Password
+    async forgotPassword(email) {
+        try {
+            const response = await fetch('/user/forgotpassword', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email })
+            });
+            if (!response.ok) throw new Error(await response.text() || 'Failed to send reset email');
+            return await response.text();
+        } catch (error) {
+            console.error('Forgot password error:', error);
+            throw error;
+        }
+    },
+
+    // Reset Password
+    async resetPassword(token, password) {
+        try {
+            const response = await fetch(`/user/resetpassword/${token}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password })
+            });
+            if (!response.ok) {
+                const text = await response.text();
+                try {
+                    const json = JSON.parse(text);
+                    throw new Error(json.Error || text);
+                } catch(e) {
+                    throw new Error(text || 'Failed to reset password');
+                }
+            }
+            return await response.text();
+        } catch (error) {
+            console.error('Reset password error:', error);
+            throw error;
+        }
+    },
     
     // UI Helpers
     updateNavbar() {
