@@ -170,7 +170,8 @@ exports.getTheatreShows = async function(req,res){
             return res.status(400).json({Status: "id not mentioned"})
         }
 
-        const s = await shows.findOne({theatre: id}).populate("movie").populate("screen")
+        const show = require("../models/showModel");
+        const s = await show.find({theatreId: id}).populate("movieId").populate("screenId")
 
         if(!s){
             return res.status(400).json({

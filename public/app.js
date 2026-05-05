@@ -91,6 +91,32 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    const cityFilter = document.getElementById('home-city-filter');
+    if (cityFilter) {
+        cityFilter.addEventListener('change', async (e) => {
+            const city = e.target.value;
+            if (!city) {
+                renderMovies(allMovies);
+                return;
+            }
+            try {
+                const res = await fetch('/show/show-by-city?city=' + encodeURIComponent(city));
+                if (!res.ok) throw new Error('Failed');
+                const data = await res.json();
+                const shows = data.shows || [];
+                
+                // Extract unique movies from shows
+                const validMovieIds = new Set(shows.map(s => s.movieId?._id || s.movieId));
+                const filtered = allMovies.filter(m => validMovieIds.has(m._id));
+                renderMovies(filtered);
+            } catch (err) {
+                console.error("City filter error:", err);
+                // Fallback: just show all if API fails
+                renderMovies(allMovies);
+            }
+        });
+    }
+
     function renderMovies(movies) {
         moviesContainer.innerHTML = '';
         

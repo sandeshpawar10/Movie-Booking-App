@@ -43,6 +43,51 @@
             border-color: rgba(255,51,102,0.3);
             box-shadow: 0 15px 30px rgba(0,0,0,0.4);
         }
+        
+        .filters-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+        .form-control {
+            padding: 0.8rem 1.5rem;
+            background: rgba(0,0,0,0.2);
+            border: 1px solid var(--glass-border);
+            border-radius: 30px;
+            color: white;
+            font-family: 'Outfit', sans-serif;
+            width: 250px;
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23ffffff%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+            background-repeat: no-repeat;
+            background-position: right 1.2rem top 50%;
+            background-size: 0.65rem auto;
+            cursor: pointer;
+        }
+        .form-control option {
+            background: var(--bg-card);
+            color: white;
+        }
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+        .btn-view {
+            background: rgba(255,51,102,0.1);
+            color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 1rem;
+            width: 100%;
+            transition: all 0.3s;
+        }
+        .btn-view:hover {
+            background: var(--primary-color);
+            color: white;
+        }
 
         .t-name {
             font-size: 1.5rem;
@@ -82,6 +127,17 @@
             <p style="color:var(--text-muted); font-size:1.1rem;">Find a premium cinema experience near you</p>
         </div>
         
+        <div class="filters-container">
+            <select id="city-filter" class="form-control" onchange="filterTheatres(this.value)">
+                <option value="">All Cities</option>
+                <option value="Mumbai">Mumbai</option>
+                <option value="Delhi">Delhi</option>
+                <option value="Bangalore">Bangalore</option>
+                <option value="Hyderabad">Hyderabad</option>
+                <option value="Chennai">Chennai</option>
+            </select>
+        </div>
+        
         <div class="theatres-grid" id="theatres-grid">
             <div class="loading-spinner"></div>
         </div>
@@ -89,30 +145,95 @@
 
     <script src="js/auth.js"></script>
     <script>
+        let allTheatres = [];
+
         async function fetchTheatres() {
             try {
                 const res = await fetch('/theatre/all-theatre');
                 if (!res.ok) throw new Error('Failed to fetch');
                 const data = await res.json();
                 
-                const theatres = data.Theatres || data.data || data;
-                
-                if (theatres.length === 0) {
-                    document.getElementById('theatres-grid').innerHTML = '<p style="grid-column:1/-1;text-align:center;">No theatres found.</p>';
-                    return;
-                }
-
-                document.getElementById('theatres-grid').innerHTML = theatres.map(t => `
-                    <div class="theatre-card">
-                        <div class="t-name"><i class="fa-solid fa-building"></i> ${t.name}</div>
-                        <div class="t-meta"><i class="fa-solid fa-location-dot"></i> ${t.location?.city || t.city || 'Unknown City'}</div>
-                        <div class="t-meta"><i class="fa-solid fa-map-pin"></i> ${t.location?.state || t.state || 'Unknown State'}</div>
-                    </div>
-                `).join('');
-
+                allTheatres = data.Theatres || data.data || data;
+                renderTheatres(allTheatres);
             } catch (error) {
                 console.error(error);
                 document.getElementById('theatres-grid').innerHTML = '<p style="color:#ff4d4d; grid-column:1/-1;text-align:center;">Error loading theatres.</p>';
+            }
+        }
+
+        async function filterTheatres(city) {
+            if (!city) {
+                renderTheatres(allTheatres);
+                return;
+            }
+            try {
+                // Testing the getTheatreByCity endpoint
+                const res = await fetch('/theatre/theatre-by-city?city=' + encodeURIComponent(city));
+                if (!res.ok) {
+                    // Fallback to local filtering if endpoint fails
+                    renderTheatres(allTheatres.filter(t => (t.location?.city || t.city || '').toLowerCase() === city.toLowerCase()));
+                    return;
+                }
+                const data = await res.json();
+                const theatres = data.data || data.Theatres || data;
+                renderTheatres(theatres);
+            } catch (e) {
+                renderTheatres(allTheatres.filter(t => (t.location?.city || t.city || '').toLowerCase() === city.toLowerCase()));
+            }
+        }
+
+        function renderTheatres(theatres) {
+            if (theatres.length === 0) {
+                document.getElementById('theatres-grid').innerHTML = '<p style="grid-column:1/-1;text-align:center;">No theatres found.</p>';
+                return;
+            }
+
+            document.getElementById('theatres-grid').innerHTML = theatres.map(t => `
+                <div class="theatre-card">
+                    <div class="t-name"><i class="fa-solid fa-building"></i> ${t.name}</div>
+                    <div class="t-meta"><i class="fa-solid fa-location-dot"></i> ${t.location?.city || t.city || 'Unknown City'}</div>
+                    <div class="t-meta"><i class="fa-solid fa-map-pin"></i> ${t.location?.state || t.state || 'Unknown State'}</div>
+                    <button class="btn-view" onclick="viewShows('${t._id}', '${(t.name||'').replace(/'/g,"\\'")}')">View Shows</button>
+                    <div id="shows-${t._id}" style="margin-top:1rem; font-size:0.9rem; display:none;"></div>
+                </div>
+            `).join('');
+        }
+
+        async function viewShows(theatreId, theatreName) {
+            const container = document.getElementById('shows-' + theatreId);
+            if (container.style.display === 'block') {
+                container.style.display = 'none';
+                return;
+            }
+            
+            container.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Loading shows...';
+            container.style.display = 'block';
+            
+            try {
+                const res = await fetch('/show/show-by-theatreId/' + theatreId);
+                if (!res.ok) throw new Error('Failed');
+                const data = await res.json();
+                const shows = data.Shows || [];
+                
+                if (shows.length === 0) {
+                    container.innerHTML = '<span style="color:var(--text-muted)">No shows currently scheduled.</span>';
+                    return;
+                }
+                
+                container.innerHTML = '<div style="margin-bottom:0.5rem; font-weight:600; color:var(--primary-color);">Currently Showing:</div>' + shows.map(s => {
+                    const mName = s.movieId?.title || s.movieId || 'Unknown Movie';
+                    const dt = new Date(s.startTime);
+                    const time = dt.toLocaleDateString() + ' ' + dt.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+                    return `<div style="background:rgba(0,0,0,0.2); padding:0.5rem; border-radius:6px; margin-bottom:0.5rem; display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <strong>${mName}</strong><br>
+                            <span style="color:var(--text-muted); font-size:0.8rem;">${time}</span>
+                        </div>
+                        <a href="movie.html?id=${s.movieId?._id || s.movieId}" style="color:var(--primary-color); text-decoration:none;"><i class="fa-solid fa-ticket"></i> Book</a>
+                    </div>`;
+                }).join('');
+            } catch(e) {
+                container.innerHTML = '<span style="color:#ff4d4d">Error loading shows.</span>';
             }
         }
 

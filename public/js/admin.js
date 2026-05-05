@@ -215,11 +215,28 @@ async function loadScreens() {
             <td>${s.name}</td><td>${s.screenNumber||'-'}</td><td>${s.totalSeats||'-'}</td>
             <td style="font-size:.85rem">${s.theatreId?._id || s.theatreId || '-'}</td>
             <td><button class="btn-icon btn-del" onclick="delScreen('${s._id}')"><i class="fa-solid fa-trash"></i></button></td></tr>`).join('');
-        // populate screen dropdown for shows
-        const sel = document.getElementById('sh-screen');
-        if (sel) sel.innerHTML = '<option value="">Select Screen</option>' + list.map(s => `<option value="${s._id}">${s.name} (#${s.screenNumber})</option>`).join('');
+        // populate screen dropdown for shows is now handled dynamically
     } catch (e) { tbody.innerHTML = '<tr><td colspan="5" style="color:#ff4d4d">Error</td></tr>'; }
 }
+
+document.getElementById('sh-theatre').addEventListener('change', async (e) => {
+    const theatreId = e.target.value;
+    const sel = document.getElementById('sh-screen');
+    sel.innerHTML = '<option value="">Loading...</option>';
+    if (!theatreId) {
+        sel.innerHTML = '<option value="">Select Screen</option>';
+        return;
+    }
+    try {
+        const r = await fetch('/screen/screen-by-theatreId/' + theatreId);
+        if (!r.ok) throw new Error();
+        const d = await r.json();
+        const list = d.Screen || d.Screens || d.screens || d.data || [];
+        sel.innerHTML = '<option value="">Select Screen</option>' + list.map(s => `<option value="${s._id}">${s.name} (#${s.screenNumber})</option>`).join('');
+    } catch (e) {
+        sel.innerHTML = '<option value="">Error loading screens</option>';
+    }
+});
 
 window.delScreen = async function(id) {
     if (!confirm('Delete this screen?')) return;

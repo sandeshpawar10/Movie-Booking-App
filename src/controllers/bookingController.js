@@ -71,6 +71,7 @@ exports.createBooking = async function(req,res){
                 return res.status(400).json({ message: `The seat ${bookedSeat.row}${bookedSeat.number} is already booked!`  });
             }
             totalPrice += s.price[seatdata.type];
+            s.bookedSeats.push(`${bookedSeat.row}${bookedSeat.number}`);
         }
 
         await s.save();
@@ -81,8 +82,6 @@ exports.createBooking = async function(req,res){
             totalAmount: totalPrice,
             bookedSeats: seats
         })
-
-        // s.bookedSeats.push(...seats.map(s => s.seat))
 
         await b.save();
 
@@ -133,17 +132,11 @@ exports.getBookingByShowId = async function(req,res){
             return res.status(400).json({Status: "id not mentioned"})
         }
 
-        const existingbooking = await booking.findOne({
+        const existingbooking = await booking.find({
             show: showid
         }).populate("user")
 
-        if(!existingbooking){
-            return res.status(409).json({
-                message: "Booking not done"
-            })
-        }
-
-        return res.status(200).json({Booking: existingbooking})
+        return res.status(200).json({Bookings: existingbooking})
 
     } catch (error) {
         return res.status(500).json({
@@ -161,17 +154,14 @@ exports.getBookingByUser = async function(req,res){
             return res.status(400).json({Status: "id not mentioned"})
         }
 
-        const existingbooking = await booking.findOne({
+        const existingbooking = await booking.find({
             user: userid
-        }).populate("show")
+        }).populate({
+            path: 'show',
+            populate: { path: 'movieId' }
+        })
 
-        if(!existingbooking){
-            return res.status(409).json({
-                message: "Booking not done."
-            })
-        }
-
-        return res.status(200).json({Booking: existingbooking})
+        return res.status(200).json({Bookings: existingbooking})
 
     } catch (error) {
         return res.status(500).json({
@@ -197,50 +187,19 @@ exports.cancelBooking = async function(req,res){
 
         const s = await show.findById(book.show)
 
-        if (!s) {
-            return res.status(404).json({ message: "Show not found" });
+        if (s) {
+            // remove booked seats from show's bookedSeats array
+            book.bookedSeats.forEach((bookedSeat) => {
+                const seatString = `${bookedSeat.row}${bookedSeat.number}`;
+                s.bookedSeats = s.bookedSeats.filter(seat => seat !== seatString);
+            });
+            await s.save();
         }
-
-        const screenid = await screen.findById(s.screenId)
-
-        if (!screenid) {
-            return res.status(404).json({ message: "Screen not found" });
-        }
-
-        if (!book) {
-            return res.status(404).json({
-                message: "Booking not found"
-            })
-        }
-
-        //console.log(book.seats)
-
-        //remove booked seats
-        book.bookedSeats.forEach((bookedSeat) => {
-
-            const rowData = screenid.seatLayout.find(
-                (r) => r.row === bookedSeat.row
-            );
-
-            if (!rowData) return;
-
-            const seat = rowData.seats.find(
-                (s) => s.number === bookedSeat.number
-            );
-
-            if (!seat) return;
-
-            seat.isBooked = false; // 🔥 UNLOCK SEAT
-        });
-
-        await s.save()
 
         book.bookingStatus = "cancelled";
         book.paymentStatus = "failed";
 
-        await book.save()
-
-        await book.deleteOne()
+        await book.save();
 
         // console.log(m)
 

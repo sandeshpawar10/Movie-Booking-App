@@ -225,12 +225,14 @@ exports.getAvailableSeats = async function(req,res){
         }
 
         const layout = s.screenId.seatLayout;
+        const bookedSeats = s.bookedSeats || [];
 
         let availableSeats = [];
 
         for(let row of layout){
             for(let seat of row.seats){
-                if(!seat.isBooked){
+                const isBooked = bookedSeats.some(b => b.row === row.row && b.number === seat.number);
+                if(!isBooked){
                     availableSeats.push({
                         row: row.row,
                         number: seat.number,
@@ -260,7 +262,7 @@ exports.getShowByTheatreId = async function(req,res){
             return res.status(400).json({Status: "theatre id not mentioned"})
         }
 
-        const m = await show.findOne({
+        const m = await show.find({
             theatreId: theatreid
         }).populate("movieId screenId")
 
@@ -318,11 +320,11 @@ exports.getScreenByMovie = async function(req,res){
         const seen = new Set()
 
         for(let sh of s){
-            if (!sh.screen) continue;
-            const screenid = sh.screen._id.toString()
+            if (!sh.screenId) continue;
+            const screenid = sh.screenId._id.toString()
             if(!seen.has(screenid)){
                 seen.add(screenid)
-                screens.push(sh.screen)
+                screens.push(sh.screenId)
             }
         }
 

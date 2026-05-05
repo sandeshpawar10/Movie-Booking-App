@@ -94,11 +94,11 @@ exports.updatescreenFunction = async function(req,res){
 
         // const {movie,theatre,screen,startTime,price,seatsAvailble} = validationResult.data
 
-        const m = await show.findByIdAndUpdate(id, validationResult.data)
+        const m = await screen.findByIdAndUpdate(id, validationResult.data)
 
         if (!m) {
             return res.status(404).json({
-                message: "Screeen not found"
+                message: "Screen not found"
             })
         }
 
@@ -140,7 +140,7 @@ exports.getscreenById = async function(req,res){
 
 exports.getAllscreen = async function(req,res){
     try {
-        const s = await screen.find().populate("theatre")
+        const s = await screen.find().populate("theatreId")
 
         return res.status(200).json({
             Total: s.length,
