@@ -229,6 +229,7 @@
                 <div id="bookings-container">
                     <p style="color: var(--text-muted)">Loading bookings...</p>
                 </div>
+                <div id="recommendations-container" style="margin-top: 3rem;"></div>
             </div>
 
             <!-- Security Tab -->
@@ -330,9 +331,66 @@
                     </div>
                 `}).join('');
 
+                // Extract genres for recommendations
+                const bookedMovieIds = new Set();
+                const genres = new Set();
+                bookings.forEach(b => {
+                    const m = b.show?.movieId;
+                    if (m && m._id && (b.bookingStatus || b.status) !== 'cancelled') {
+                        bookedMovieIds.add(m._id);
+                        if (m.genre && Array.isArray(m.genre)) {
+                            m.genre.forEach(g => genres.add(g));
+                        }
+                    }
+                });
+
+                if (genres.size > 0) {
+                    fetchRecommendations(Array.from(genres), bookedMovieIds);
+                }
+
             } catch (err) {
                 console.error(err);
                 container.innerHTML = '<p style="color: #ff4d4d">Error loading bookings.</p>';
+            }
+        }
+
+        async function fetchRecommendations(genres, excludeIds) {
+            try {
+                const res = await fetch('/get-movies');
+                if (!res.ok) return;
+                const data = await res.json();
+                const movies = data.movies || data.data || [];
+                
+                const recommended = movies.filter(m => {
+                    if (excludeIds.has(m._id)) return false; // skip booked
+                    if (!m.genre || !Array.isArray(m.genre)) return false;
+                    return m.genre.some(g => genres.includes(g));
+                }).slice(0, 4); // top 4
+
+                if (recommended.length > 0) {
+                    let html = `<h3 style="margin-bottom: 1rem; border-bottom: 1px solid var(--glass-border); padding-bottom: 0.5rem; color: var(--primary-color);">You Might Also Like</h3>
+                                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 1rem;">`;
+                    
+                    recommended.forEach(m => {
+                        let posterUrl = 'https://images.unsplash.com/photo-1485846234645-a62644f84728?q=80&w=1000&auto=format&fit=crop';
+                        if (m.poster) {
+                            posterUrl = m.poster.startsWith('http') || m.poster.startsWith('data:') ? m.poster : `/images/${m.poster}`;
+                        }
+                        html += `
+                        <div style="background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 8px; overflow: hidden; cursor: pointer; transition: transform 0.2s;" onclick="window.location.href='movie.html?id=${m._id}'" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                            <img src="${posterUrl}" alt="${m.title}" style="width: 100%; height: 220px; object-fit: cover;">
+                            <div style="padding: 0.8rem;">
+                                <h4 style="font-size: 0.95rem; margin-bottom: 0.3rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${m.title}</h4>
+                                <span style="font-size: 0.75rem; color: var(--text-muted);">${m.genre.slice(0,2).join(', ')}</span>
+                            </div>
+                        </div>`;
+                    });
+                    
+                    html += `</div>`;
+                    document.getElementById('recommendations-container').innerHTML = html;
+                }
+            } catch (err) {
+                console.error("Failed to load recommendations", err);
             }
         }
 

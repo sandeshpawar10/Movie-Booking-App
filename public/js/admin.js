@@ -25,6 +25,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!user || user.role !== 'admin') {
         document.body.innerHTML = '<h1 style="color:#fff;text-align:center;margin-top:20vh">403 Forbidden</h1>';
         setTimeout(() => window.location.href = 'index.html', 2000);
+    } else {
+        loadAnalytics();
     }
 });
 
@@ -33,17 +35,35 @@ function switchTab(tabId, btn) {
     document.querySelectorAll('.admin-nav button').forEach(el => el.classList.remove('active'));
     document.getElementById('tab-' + tabId).classList.add('active');
     btn.classList.add('active');
+    if (tabId === 'dashboard') loadAnalytics();
     if (tabId === 'manage') loadAllMovies();
     if (tabId === 'theatres') loadTheatres();
     if (tabId === 'screens') loadScreens();
     if (tabId === 'shows') loadShows();
     if (tabId === 'bookings') loadAllBookings();
+    if (tabId === 'approvals') loadPendingTheatres();
 }
 
 function showMsg(text, type) {
     const b = document.getElementById('msg-box');
     b.textContent = text; b.className = type; b.style.display = 'block';
     setTimeout(() => b.style.display = 'none', 5000);
+}
+
+// ==================== ANALYTICS ====================
+async function loadAnalytics() {
+    try {
+        const res = await Auth.fetchWithAuth('/admin/analytics');
+        if (!res.ok) return;
+        const json = await res.json();
+        const data = json.data;
+        document.getElementById('stat-bookings').textContent = data.totalBookings || 0;
+        document.getElementById('stat-revenue').textContent = data.totalRevenue ? `₹${data.totalRevenue}` : '₹0';
+        document.getElementById('stat-users').textContent = data.totalUsers || 0;
+        document.getElementById('stat-theatres').textContent = data.activeTheatres || 0;
+    } catch (e) {
+        console.error('Analytics load error:', e);
+    }
 }
 
 // ==================== MOVIES ====================
@@ -369,4 +389,45 @@ async function loadAllBookings() {
             <td>₹${b.totalAmount||0}</td>
             <td><span class="status-badge">${b.bookingStatus||'pending'}</span></td></tr>`).join('');
     } catch (e) { tbody.innerHTML = '<tr><td colspan="4" style="color:#ff4d4d">Error</td></tr>'; }
+}
+
+// ==================== APPROVALS ====================
+async function loadPendingTheatres() {
+    try {
+        const res = await Auth.fetchWithAuth('/theatre/get-pending');
+        if (!res.ok) throw new Error('Failed to load pending theatres');
+        const data = await res.json();
+        const theatres = data.data || [];
+        const tbody = document.getElementById('approvals-table-body');
+        
+        if (theatres.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">No pending approvals</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = theatres.map(t => `
+            <tr>
+                <td>${t.name}</td>
+                <td>${t.location?.city || t.city || 'Unknown'}</td>
+                <td>${t.owner?.email || 'Admin'}</td>
+                <td>
+                    <button class="btn-submit" style="padding:0.4rem 1rem;" onclick="approveTheatre('${t._id}')"><i class="fa-solid fa-check"></i> Approve</button>
+                </td>
+            </tr>
+        `).join('');
+    } catch (e) {
+        showMsg(e.message, 'error');
+    }
+}
+
+async function approveTheatre(id) {
+    if (!confirm('Are you sure you want to approve this theatre?')) return;
+    try {
+        const res = await Auth.fetchWithAuth(`/theatre/approve/${id}`, { method: 'PATCH' });
+        if (!res.ok) throw new Error('Failed to approve theatre');
+        showMsg('Theatre approved successfully', 'success');
+        loadPendingTheatres(); // Refresh the list
+    } catch (e) {
+        showMsg(e.message, 'error');
+    }
 }

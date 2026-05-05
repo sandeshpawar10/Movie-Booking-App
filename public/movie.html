@@ -143,6 +143,18 @@
             window.location.href = 'index.html';
         }
 
+        let allShowsData = [];
+        let currentMovie = null;
+
+        function getLocalYYYYMMDD(dateObj) {
+            const y = dateObj.getFullYear();
+            const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const d = String(dateObj.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
+        let selectedDate = getLocalYYYYMMDD(new Date());
+
         async function fetchMovieDetails() {
             try {
                 // Handle mock data
@@ -169,12 +181,13 @@
                 let showsError = null;
                 if (showsRes.ok) {
                     const parsed = await showsRes.json();
-                    showsData = Array.isArray(parsed) ? parsed : (parsed.Show || parsed.shows || parsed.data || []);
+                    allShowsData = Array.isArray(parsed) ? parsed : (parsed.Show || parsed.shows || parsed.data || []);
                 } else {
                     showsError = await showsRes.text();
                 }
 
-                renderMovie(movie, showsData, showsError);
+                currentMovie = movie;
+                renderMovie(movie, showsError);
             } catch (err) {
                 console.error(err);
                 document.getElementById('movie-content').innerHTML = `
@@ -186,7 +199,30 @@
             }
         }
 
-        function renderMovie(movie, shows, showsError) {
+        function generateDateStrip() {
+            let html = '';
+            for (let i = 0; i < 7; i++) {
+                const d = new Date();
+                d.setDate(d.getDate() + i);
+                const dateString = getLocalYYYYMMDD(d);
+                const displayDay = i === 0 ? 'Today' : (i === 1 ? 'Tomorrow' : d.toLocaleDateString('en-US', {weekday: 'short'}));
+                const displayDate = d.toLocaleDateString('en-US', {month: 'short', day: 'numeric'});
+                const isActive = dateString === selectedDate ? 'background: var(--primary-color); color: white; border-color: var(--primary-color);' : 'background: rgba(0,0,0,0.2); color: var(--text-muted); border-color: var(--glass-border);';
+                
+                html += `<button onclick="filterShowsByDate('${dateString}')" style="padding: 0.8rem 1.5rem; border-radius: 12px; border: 1px solid var(--glass-border); cursor: pointer; text-align: center; min-width: 90px; transition: all 0.3s; ${isActive}">
+                            <div style="font-weight: 600; font-size: 0.9rem;">${displayDay}</div>
+                            <div style="font-size: 1.1rem; font-weight: 800; margin-top: 0.2rem;">${displayDate}</div>
+                         </button>`;
+            }
+            return html;
+        }
+
+        window.filterShowsByDate = function(dateStr) {
+            selectedDate = dateStr;
+            renderMovie(currentMovie, null);
+        }
+
+        function renderMovie(movie, showsError) {
             let posterUrl = 'https://images.unsplash.com/photo-1485846234645-a62644f84728?q=80&w=1000&auto=format&fit=crop';
             if (movie.poster) {
                 if (movie.poster.startsWith('http') || movie.poster.startsWith('data:')) {
@@ -199,16 +235,23 @@
             const genres = (movie.genre || []).map(g => `<span class="tag">${g}</span>`).join('');
             const desc = movie.descrition || movie.description || 'No description available.';
 
+            // Filter shows by selected date
+            const showsForDate = allShowsData.filter(s => {
+                if (!s.startTime && !s.date) return false;
+                const d = new Date(s.startTime || s.date);
+                return getLocalYYYYMMDD(d) === selectedDate;
+            });
+
             let showsHTML = '';
             
             if (showsError) {
                 showsHTML = `<p style="color: #ff4d4d; font-size:1.2rem; text-align:center;">Failed to load shows: ${showsError}</p>`;
-            } else if (shows.length === 0) {
-                showsHTML = '<p style="color: var(--text-muted); font-size:1.2rem; text-align:center;">No shows currently available for this movie.</p>';
+            } else if (showsForDate.length === 0) {
+                showsHTML = `<p style="color: var(--text-muted); font-size:1.2rem; text-align:center; padding: 2rem;">No shows on this date — try another day.</p>`;
             } else {
                 // Group shows by Theatre
                 const theatreMap = {};
-                shows.forEach(show => {
+                showsForDate.forEach(show => {
                     const theatreObj = show.theatreId || show.theatre;
                     if (!theatreObj) return; // skip if no theatre data
                     
@@ -226,8 +269,39 @@
                     const times = t.shows.map(s => {
                         const dateObj = new Date(s.startTime || s.date);
                         const timeString = dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                        const dateString = dateObj.toLocaleDateString();
-                        return `<button class="show-time-btn" onclick="bookShow('${s._id}')">${dateString} ${timeString}</button>`;
+                        
+                        // Calculate price
+                        const minPrice = s.price?.silver || s.price?.gold || s.price?.platinum || 0;
+                        
+                        // Calculate fill percentage
+                        const totalSeats = s.screenId?.seatLayout?.reduce((acc, r) => acc + (r.seats?.length || 0), 0) || 100;
+                        const bookedSeatsCount = s.bookedSeats?.length || 0;
+                        const fillPercent = Math.min((bookedSeatsCount / totalSeats) * 100, 100);
+                        
+                        let barColor = '#4caf50'; // Green
+                        let badge = '';
+                        if (fillPercent > 80) {
+                            barColor = '#ff4d4d'; // Red
+                            badge = `<div style="position:absolute; top:-10px; right:-10px; background:#ff4d4d; color:white; font-size:0.65rem; padding:2px 6px; border-radius:10px; font-weight:bold; z-index:2;">Almost Full!</div>`;
+                        } else if (fillPercent > 50) {
+                            barColor = '#ffb74d'; // Amber
+                        }
+                        
+                        const seatsLeft = Math.max(totalSeats - bookedSeatsCount, 0);
+                        const seatsText = seatsLeft < 20 ? `<div style="font-size:0.7rem; color:${barColor}; margin-top:4px;">${seatsLeft} seats left</div>` : '';
+
+                        return `
+                        <div style="position:relative;">
+                            ${badge}
+                            <button class="show-time-btn" onclick="bookShow('${s._id}')" style="display:flex; flex-direction:column; align-items:center; gap:0.3rem; min-width: 100px; padding: 0.6rem 1rem;">
+                                <span style="font-size:1.1rem;">${timeString}</span>
+                                <span style="font-size:0.8rem; color:var(--text-muted);">₹${minPrice}</span>
+                                <div style="width:100%; height:4px; background:rgba(255,255,255,0.1); border-radius:2px; overflow:hidden; margin-top:2px;">
+                                    <div style="width:${fillPercent}%; height:100%; background:${barColor};"></div>
+                                </div>
+                            </button>
+                            ${seatsText}
+                        </div>`;
                     }).join('');
 
                     showsHTML += `
@@ -235,7 +309,7 @@
                             <div class="theatre-info">
                                 <h3><i class="fa-solid fa-building"></i> ${t.name}</h3>
                             </div>
-                            <div class="show-times">
+                            <div class="show-times" style="display:flex; gap:1rem; flex-wrap:wrap; margin-top:1rem;">
                                 ${times}
                             </div>
                         </div>
@@ -258,8 +332,13 @@
                 </div>
 
                 <div class="shows-section">
-                    <h2 style="font-size:2.5rem; margin-bottom:2rem; border-bottom: 2px solid var(--primary-color); display:inline-block; padding-bottom:0.5rem;">Available Shows</h2>
-                    ${showsHTML}
+                    <h2 style="font-size:2.5rem; margin-bottom:1rem; border-bottom: 2px solid var(--primary-color); display:inline-block; padding-bottom:0.5rem;">Available Shows</h2>
+                    <div id="date-strip" style="display:flex; gap:1rem; margin-bottom: 2rem; overflow-x: auto; padding-bottom: 1rem;">
+                        ${generateDateStrip()}
+                    </div>
+                    <div id="shows-container" style="display:flex; flex-direction:column; gap:1.5rem;">
+                        ${showsHTML}
+                    </div>
                 </div>
             `;
         }

@@ -95,7 +95,7 @@ exports.updatetheatreFunction = async function(req,res){
 
 exports.getAllTheatres = async (req, res) => {
     try {
-        const theatres = await theatre.find({ isActive: true })
+        const theatres = await theatre.find({ isActive: true, isApproved: true })
 
         return res.status(200).json({
             message: "Theatres fetched successfully",
@@ -143,12 +143,14 @@ exports.getTheatreByCity = async function(req,res){
 
         const theatres = await theatre.find({
             "location.city": city,
-            isActive: true
+            isActive: true,
+            isApproved: true
         })
 
         const total = await theatre.countDocuments({
             "location.city": city,
-            isActive: true
+            isActive: true,
+            isApproved: true
         })
 
         return res.status(200).json({
@@ -186,5 +188,26 @@ exports.getTheatreShows = async function(req,res){
             message: "Internal Server Error",
             error: error.message
         })
+    }
+}
+
+// Admin only endpoints
+exports.getPendingTheatres = async (req, res) => {
+    try {
+        const theatres = await theatre.find({ isApproved: false }).populate("owner", "username email");
+        return res.status(200).json({ data: theatres });
+    } catch (error) {
+        return res.status(500).json({ message: "Error fetching pending theatres", error: error.message });
+    }
+}
+
+exports.approveTheatre = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const updated = await theatre.findByIdAndUpdate(id, { isApproved: true }, { new: true });
+        if (!updated) return res.status(404).json({ message: "Theatre not found" });
+        return res.status(200).json({ message: "Theatre approved successfully", data: updated });
+    } catch (error) {
+        return res.status(500).json({ message: "Error approving theatre", error: error.message });
     }
 }

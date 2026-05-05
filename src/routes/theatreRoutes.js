@@ -11,5 +11,6 @@ router.get('/theatre/all-theatre',controller.getAllTheatres)
 router.get('/theatre/get-theatre/:id',controller.getTheatreById)
 router.get('/theatre/theatre-by-city',controller.getTheatreByCity)
 router.get('/theatre/get-theatre-shows/:id',controller.getTheatreShows)
-
+router.get('/theatre/get-pending', verifyJWt, checkAdmin, controller.getPendingTheatres)
+router.patch('/theatre/approve/:id', verifyJWt, checkAdmin, controller.approveTheatre)
 module.exports = router

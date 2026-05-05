@@ -89,13 +89,39 @@
             <button onclick="switchTab('screens',this)"><i class="fa-solid fa-tv"></i> Screens</button>
             <button onclick="switchTab('shows',this)"><i class="fa-solid fa-clapperboard"></i> Shows</button>
             <button onclick="switchTab('bookings',this)"><i class="fa-solid fa-ticket"></i> Bookings</button>
+            <button onclick="switchTab('approvals',this)"><i class="fa-solid fa-check-double"></i> Approvals</button>
         </div></div>
 
         <div class="admin-content">
             <div id="msg-box"></div>
 
             <!-- Dashboard -->
-            <div id="tab-dashboard" class="tab-content active"><h2>Admin Dashboard</h2><p style="color:var(--text-muted);margin-top:1rem">Welcome! Use the sidebar to manage Movies, Theatres, Screens, Shows & Bookings.</p></div>
+            <div id="tab-dashboard" class="tab-content active">
+                <h2>Admin Dashboard</h2>
+                <p style="color:var(--text-muted);margin-top:1rem;margin-bottom:2rem;">Welcome! Use the sidebar to manage Movies, Theatres, Screens, Shows & Bookings.</p>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem;" id="analytics-container">
+                    <div style="background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 12px; padding: 1.5rem; text-align: center;">
+                        <i class="fa-solid fa-ticket" style="font-size: 2rem; color: var(--primary-color); margin-bottom: 1rem;"></i>
+                        <h3 style="font-size: 2rem; margin-bottom: 0.5rem;" id="stat-bookings">-</h3>
+                        <p style="color: var(--text-muted); font-size: 0.9rem;">Total Bookings</p>
+                    </div>
+                    <div style="background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 12px; padding: 1.5rem; text-align: center;">
+                        <i class="fa-solid fa-indian-rupee-sign" style="font-size: 2rem; color: #4caf50; margin-bottom: 1rem;"></i>
+                        <h3 style="font-size: 2rem; margin-bottom: 0.5rem;" id="stat-revenue">-</h3>
+                        <p style="color: var(--text-muted); font-size: 0.9rem;">Total Revenue</p>
+                    </div>
+                    <div style="background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 12px; padding: 1.5rem; text-align: center;">
+                        <i class="fa-solid fa-users" style="font-size: 2rem; color: #ff9800; margin-bottom: 1rem;"></i>
+                        <h3 style="font-size: 2rem; margin-bottom: 0.5rem;" id="stat-users">-</h3>
+                        <p style="color: var(--text-muted); font-size: 0.9rem;">Registered Users</p>
+                    </div>
+                    <div style="background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 12px; padding: 1.5rem; text-align: center;">
+                        <i class="fa-solid fa-building" style="font-size: 2rem; color: #2196f3; margin-bottom: 1rem;"></i>
+                        <h3 style="font-size: 2rem; margin-bottom: 0.5rem;" id="stat-theatres">-</h3>
+                        <p style="color: var(--text-muted); font-size: 0.9rem;">Active Theatres</p>
+                    </div>
+                </div>
+            </div>
 
             <!-- Add Movie -->
             <div id="tab-movies" class="tab-content"><h2>Add New Movie</h2>
@@ -155,6 +181,12 @@
             <div id="tab-bookings" class="tab-content"><h2>All Bookings</h2>
                 <table class="data-table"><thead><tr><th>Booking ID</th><th>Show ID</th><th>Amount</th><th>Status</th></tr></thead>
                 <tbody id="all-bookings-body"><tr><td colspan="4">Click tab to load</td></tr></tbody></table>
+            </div>
+
+            <!-- Approvals -->
+            <div id="tab-approvals" class="tab-content"><h2>Pending Theatres</h2>
+                <table class="data-table"><thead><tr><th>Theatre Name</th><th>City</th><th>Owner Email</th><th>Actions</th></tr></thead>
+                <tbody id="approvals-table-body"><tr><td colspan="4">Click tab to load</td></tr></tbody></table>
             </div>
         </div>
     </div>

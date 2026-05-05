@@ -7,6 +7,11 @@
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Leaflet for Maps -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
     <style>
         .theatres-container {
             max-width: 1200px;
@@ -194,9 +199,76 @@
                     <div class="t-meta"><i class="fa-solid fa-location-dot"></i> ${t.location?.city || t.city || 'Unknown City'}</div>
                     <div class="t-meta"><i class="fa-solid fa-map-pin"></i> ${t.location?.state || t.state || 'Unknown State'}</div>
                     <button class="btn-view" onclick="viewShows('${t._id}', '${(t.name||'').replace(/'/g,"\\'")}')">View Shows</button>
+                    <button class="btn-view" style="background:rgba(255,255,255,0.1); color:white; margin-top:0.5rem;" onclick="viewMap('${t._id}', '${t.location?.address || t.address || ''}', '${t.location?.city || t.city || ''}')"><i class="fa-solid fa-map"></i> View Map</button>
                     <div id="shows-${t._id}" style="margin-top:1rem; font-size:0.9rem; display:none;"></div>
+                    <div id="map-${t._id}" style="margin-top:1rem; height:200px; display:none; border-radius:8px; z-index:0;"></div>
                 </div>
             `).join('');
+        }
+
+        let mapInstances = {};
+
+        async function viewMap(id, address, city) {
+            const mapDiv = document.getElementById('map-' + id);
+            
+            // Toggle map visibility
+            if (mapDiv.style.display === 'block') {
+                mapDiv.style.display = 'none';
+                return;
+            }
+            
+            mapDiv.style.display = 'block';
+
+            if (mapInstances[id]) {
+                // Need to invalidate size after making it visible
+                setTimeout(() => mapInstances[id].invalidateSize(), 100);
+                return;
+            }
+
+            mapDiv.innerHTML = '<p style="color:var(--text-muted); text-align:center; margin-top:20%;">Loading map...</p>';
+
+            try {
+                // Geocode using Nominatim
+                const query = encodeURIComponent(`${address}, ${city}`);
+                const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}&limit=1`);
+                let data = await res.json();
+                
+                let lat, lon;
+                if (data && data.length > 0) {
+                    lat = data[0].lat;
+                    lon = data[0].lon;
+                } else {
+                    // Fallback to City level if full address fails
+                    const resCity = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(city)}&limit=1`);
+                    const dataCity = await resCity.json();
+                    if (dataCity && dataCity.length > 0) {
+                        lat = dataCity[0].lat;
+                        lon = dataCity[0].lon;
+                    } else {
+                        mapDiv.innerHTML = '<p style="color:#ff4d4d; text-align:center; margin-top:20%;">Location not found.</p>';
+                        return;
+                    }
+                }
+                
+                mapDiv.innerHTML = ''; // clear loading text
+                
+                const map = L.map('map-' + id).setView([lat, lon], 14);
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                    attribution: '&copy; OpenStreetMap & CARTO'
+                }).addTo(map);
+                
+                L.marker([lat, lon]).addTo(map)
+                    .bindPopup(`<a href="https://www.google.com/maps/search/?api=1&query=${lat},${lon}" target="_blank" style="color:#000; font-weight:bold;">Get Directions</a>`);
+                    
+                mapInstances[id] = map;
+                
+                // Ensure tiles load correctly in initially hidden div
+                setTimeout(() => map.invalidateSize(), 100);
+
+            } catch (err) {
+                console.error(err);
+                mapDiv.innerHTML = '<p style="color:#ff4d4d; text-align:center; margin-top:20%;">Failed to load map.</p>';
+            }
         }
 
         async function viewShows(theatreId, theatreName) {

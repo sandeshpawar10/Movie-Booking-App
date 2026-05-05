@@ -4,6 +4,8 @@ const trannsaction = require("../models/transactionModel")
 const crypto = require("crypto")
 const screen = require("../models/screenModel")
 const show = require("../models/showModel")
+const user = require("../models/userModel")
+const sendEmail = require("../utils/mailer")
 
 exports.createOrder = async function(req,res){
     try {
@@ -81,6 +83,23 @@ exports.verifyPayment = async function(req,res){
 
         await book.save()
         await s.save()
+
+        // Send confirmation email
+        try {
+            const u = await user.findById(book.user);
+            if (u && u.email) {
+                const seatsStr = book.bookedSeats.map(seat => `${seat.row}${seat.number}`).join(', ');
+                const movieTitle = s.movieId ? (await require('../models/movieModel').findById(s.movieId))?.title || 'Movie' : 'Movie';
+                const showTime = new Date(s.startTime).toLocaleString();
+                sendEmail(
+                    u.email,
+                    `Booking Confirmed - CineMagic`,
+                    `Hello ${u.username},\n\nYour booking has been confirmed!\n\nBooking ID: ${book._id}\nMovie: ${movieTitle}\nShow Time: ${showTime}\nSeats: ${seatsStr}\nTotal Paid: ₹${book.totalAmount}\n\nPlease arrive 15 minutes early. Show your QR code at the entrance.\n\nEnjoy the movie!\n- Team CineMagic`
+                );
+            }
+        } catch (emailErr) {
+            console.error('Failed to send confirmation email:', emailErr);
+        }
 
          res.status(200).json({
             message: "Payment verified & booking confirmed"

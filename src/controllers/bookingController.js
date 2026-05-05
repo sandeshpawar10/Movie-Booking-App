@@ -2,6 +2,7 @@ const booking = require("../models/bookingModel")
 const show = require("../models/showModel")
 const user = require("../models/userModel")
 const screen = require("../models/screenModel")
+const sendEmail = require("../utils/mailer")
 
 exports.createBooking = async function(req,res){
     try {
@@ -72,6 +73,11 @@ exports.createBooking = async function(req,res){
             }
             totalPrice += s.price[seatdata.type];
             s.bookedSeats.push(`${bookedSeat.row}${bookedSeat.number}`);
+        }
+
+        // Apply 10% discount for group bookings of 4+ seats
+        if (seats.length >= 4) {
+            totalPrice = totalPrice - (totalPrice * 0.10);
         }
 
         await s.save();
@@ -201,7 +207,25 @@ exports.cancelBooking = async function(req,res){
 
         await book.save();
 
-        // console.log(m)
+        // Send cancellation email
+        try {
+            const u = await user.findById(book.user);
+            if (u && u.email) {
+                const seatsStr = book.bookedSeats.map(seat => `${seat.row}${seat.number}`).join(', ');
+                let movieTitle = 'Movie';
+                if (s && s.movieId) {
+                    const movie = await require('../models/movieModel').findById(s.movieId);
+                    if (movie) movieTitle = movie.title;
+                }
+                sendEmail(
+                    u.email,
+                    `Booking Cancelled - CineMagic`,
+                    `Hello ${u.username},\n\nYour booking has been cancelled.\n\nBooking ID: ${book._id}\nMovie: ${movieTitle}\nSeats: ${seatsStr}\nRefund Amount: ₹${book.totalAmount}\n\nIf you did not request this cancellation, please contact support immediately.\n\n- Team CineMagic`
+                );
+            }
+        } catch (emailErr) {
+            console.error('Failed to send cancellation email:', emailErr);
+        }
 
         return res.status(200).json({Status: "Booking Canceled successfully !!"})
 

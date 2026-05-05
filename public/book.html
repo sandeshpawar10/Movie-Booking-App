@@ -201,6 +201,10 @@
             <i class="fa-solid fa-circle-check" style="color:#4dff88; font-size:4rem; margin-bottom:1rem;"></i>
             <h2>Booking Successful!</h2>
             <p style="color:var(--text-muted); margin:1rem 0 2rem;">Your tickets have been booked.</p>
+            <div id="success-qr-container" style="display:none; margin-bottom: 2rem;">
+                <img id="success-qr" src="" alt="QR Code" style="border-radius:8px; width:150px; height:150px;">
+                <p style="color:#888; font-size:0.8rem; margin-top:0.5rem;">Scan this QR code at the cinema</p>
+            </div>
             <button onclick="window.location.href='profile.html'" class="btn-pay" style="width:auto; padding:0.8rem 2rem;">View Bookings</button>
         </div>
     </div>
@@ -296,13 +300,13 @@
                     </div>
                     <div class="seat-legend" style="flex-wrap:wrap;">
                         <div class="legend-item">
-                            <div class="legend-box" style="background:rgba(255,255,255,0.1); border-bottom:3px solid #c0c0c0;"></div> Silver
+                            <div class="legend-box" style="background:rgba(255,255,255,0.1); border-bottom:3px solid #c0c0c0;"></div> Silver (₹${currentShow.price?.silver || 0})
                         </div>
                         <div class="legend-item">
-                            <div class="legend-box" style="background:rgba(255,255,255,0.1); border-bottom:3px solid #ffd700;"></div> Gold
+                            <div class="legend-box" style="background:rgba(255,255,255,0.1); border-bottom:3px solid #ffd700;"></div> Gold (₹${currentShow.price?.gold || 0})
                         </div>
                         <div class="legend-item">
-                            <div class="legend-box" style="background:rgba(255,255,255,0.1); border-bottom:3px solid #a0b2c6;"></div> Platinum
+                            <div class="legend-box" style="background:rgba(255,255,255,0.1); border-bottom:3px solid #a0b2c6;"></div> Platinum (₹${currentShow.price?.platinum || 0})
                         </div>
                         <div class="legend-item">
                             <div class="legend-box" style="background:var(--primary-color);"></div> Selected
@@ -324,6 +328,7 @@
                     <div class="total-price">
                         Total Amount: <span id="total-amount">₹0</span>
                     </div>
+                    <div id="discount-container"></div>
                     <button class="btn-pay" id="pay-btn" disabled onclick="processBooking()">Pay & Book</button>
                     <p id="error-msg" style="color:#ff4d4d; margin-top:10px; font-size:0.9rem; display:none;"></p>
                 </div>
@@ -362,18 +367,32 @@
         function updateSummary() {
             const listEl = document.getElementById('selected-seats-list');
             const amountEl = document.getElementById('total-amount');
+            const discountContainer = document.getElementById('discount-container');
             const btn = document.getElementById('pay-btn');
 
             if (selectedSeats.length === 0) {
                 listEl.textContent = 'None';
                 amountEl.textContent = '₹0';
+                if (discountContainer) discountContainer.innerHTML = '';
                 btn.disabled = true;
                 return;
             }
 
             listEl.textContent = selectedSeats.map(s => s.id).join(', ');
-            const total = selectedSeats.reduce((acc, curr) => acc + curr.price, 0);
-            amountEl.textContent = `₹${total}`;
+            let originalTotal = selectedSeats.reduce((acc, curr) => acc + curr.price, 0);
+            let finalTotal = originalTotal;
+
+            if (selectedSeats.length >= 4) {
+                const discount = originalTotal * 0.10;
+                finalTotal = originalTotal - discount;
+                if (discountContainer) {
+                    discountContainer.innerHTML = `<p style="color: #4caf50; font-size: 0.95rem; font-weight: bold; margin-bottom: 1rem; text-align: right;"><i class="fa-solid fa-tag"></i> 10% Group Discount Applied! (-₹${discount.toFixed(0)})</p>`;
+                }
+            } else {
+                if (discountContainer) discountContainer.innerHTML = '';
+            }
+
+            amountEl.textContent = `₹${finalTotal.toFixed(0)}`;
             btn.disabled = false;
         }
 
@@ -438,6 +457,10 @@
                             });
 
                             if (!verifyRes.ok) throw new Error('Payment verification failed');
+
+                            // Show QR Code
+                            document.getElementById('success-qr').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=CineMagic_Booking_${bookingId}`;
+                            document.getElementById('success-qr-container').style.display = 'block';
 
                             document.getElementById('msg-overlay').style.display = 'flex';
                         } catch (err) {

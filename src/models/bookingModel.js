@@ -42,6 +42,10 @@ const bookingSchema = new Schema({
         type: String,
         enum: ["pending", "confirmed", "cancelled"],
         default: "pending"
+    },
+    reminderSent: {
+        type: Boolean,
+        default: false
     }
 },{
     timestamps: true
