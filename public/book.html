@@ -97,6 +97,10 @@
             cursor: not-allowed;
         }
 
+        .seat.silver { border-bottom: 3px solid #c0c0c0; color: #c0c0c0; }
+        .seat.gold { border-bottom: 3px solid #ffd700; color: #ffd700; }
+        .seat.platinum { border-bottom: 3px solid #568ac5; color: #568ac5; }
+
         .seat-legend {
             display: flex;
             justify-content: center;
@@ -272,7 +276,7 @@
             layout.forEach(r => {
                 let seatsHTML = r.seats.map(s => {
                     const isBooked = s.isBooked || (currentShow.bookedSeats && currentShow.bookedSeats.includes(`${r.row}${s.number}`));
-                    const seatClass = isBooked ? 'seat booked' : 'seat';
+                    const seatClass = isBooked ? 'seat booked' : `seat ${s.type || ''}`;
                     return `<div class="${seatClass}" data-row="${r.row}" data-number="${s.number}" data-type="${s.type}" onclick="toggleSeat(this, ${isBooked})">${s.number}</div>`;
                 }).join('');
 
@@ -290,9 +294,15 @@
                     <div class="seats-grid">
                         ${rowsHTML}
                     </div>
-                    <div class="seat-legend">
+                    <div class="seat-legend" style="flex-wrap:wrap;">
                         <div class="legend-item">
-                            <div class="legend-box" style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2);"></div> Available
+                            <div class="legend-box" style="background:rgba(255,255,255,0.1); border-bottom:3px solid #c0c0c0;"></div> Silver
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-box" style="background:rgba(255,255,255,0.1); border-bottom:3px solid #ffd700;"></div> Gold
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-box" style="background:rgba(255,255,255,0.1); border-bottom:3px solid #a0b2c6;"></div> Platinum
                         </div>
                         <div class="legend-item">
                             <div class="legend-box" style="background:var(--primary-color);"></div> Selected
