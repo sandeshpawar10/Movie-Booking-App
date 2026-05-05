@@ -285,7 +285,7 @@
                 const res = await fetch('/show/show-by-theatreId/' + theatreId);
                 if (!res.ok) throw new Error('Failed');
                 const data = await res.json();
-                const shows = data.Shows || [];
+                const shows = data.Show || data.Shows || [];
                 
                 if (shows.length === 0) {
                     container.innerHTML = '<span style="color:var(--text-muted)">No shows currently scheduled.</span>';
