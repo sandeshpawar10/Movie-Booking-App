@@ -50,7 +50,7 @@ exports.removeMovieFunction = async function(req,res){
             return res.status(400).json({Status: "id not mentioned"})
         }
 
-        const deletedMovie = await movie.findOneAndDelete(id)
+        const deletedMovie = await movie.findByIdAndDelete(id)
 
         if (!deletedMovie) {
             return res.status(404).json({
