@@ -273,7 +273,8 @@ async function loadShows() {
                 <td>${s.theatreId?.name || s.theatreId || '-'}</td>
                 <td>${time}</td>
                 <td>S:₹${s.price?.silver||0} G:₹${s.price?.gold||0} P:₹${s.price?.platinum||0}</td>
-                <td><button class="btn-icon btn-del" onclick="delShow('${s._id}')"><i class="fa-solid fa-trash"></i></button></td></tr>`;
+                <td><button class="btn-icon btn-edit" onclick="editShow('${s._id}')"><i class="fa-solid fa-pen"></i></button>
+                <button class="btn-icon btn-del" onclick="delShow('${s._id}')"><i class="fa-solid fa-trash"></i></button></td></tr>`;
         }).join('');
     } catch (e) { tbody.innerHTML = '<tr><td colspan="5" style="color:#ff4d4d">Error</td></tr>'; }
 }
@@ -285,6 +286,57 @@ window.delShow = async function(id) {
         if (!r.ok) throw new Error('Failed'); showMsg('Show deleted!', 'success'); loadShows();
     } catch (e) { showMsg(e.message, 'error'); }
 };
+
+window.editShow = async function(id) {
+    try {
+        const r = await fetch('/show/show-by-id/' + id); const d = await r.json();
+        const s = d.Show || d.show || d;
+        document.getElementById('es-id').value = s._id;
+        
+        // Populate dropdowns first
+        document.getElementById('es-movie').innerHTML = document.getElementById('sh-movie').innerHTML;
+        document.getElementById('es-theatre').innerHTML = document.getElementById('sh-theatre').innerHTML;
+        document.getElementById('es-screen').innerHTML = document.getElementById('sh-screen').innerHTML;
+
+        document.getElementById('es-movie').value = s.movieId?._id || s.movieId || '';
+        document.getElementById('es-theatre').value = s.theatreId?._id || s.theatreId || '';
+        document.getElementById('es-screen').value = s.screenId?._id || s.screenId || '';
+        
+        // Format datetime-local
+        if (s.startTime) {
+            const dt = new Date(s.startTime);
+            const pad = (n) => n.toString().padStart(2, '0');
+            document.getElementById('es-time').value = `${dt.getFullYear()}-${pad(dt.getMonth()+1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
+        }
+        
+        document.getElementById('es-silver').value = s.price?.silver || '';
+        document.getElementById('es-gold').value = s.price?.gold || '';
+        document.getElementById('es-platinum').value = s.price?.platinum || '';
+        
+        document.getElementById('edit-show-modal').classList.add('open');
+    } catch (e) { showMsg(e.message, 'error'); }
+};
+
+document.getElementById('edit-show-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const id = document.getElementById('es-id').value;
+    const payload = {
+        movieId: document.getElementById('es-movie').value,
+        theatreId: document.getElementById('es-theatre').value,
+        screenId: document.getElementById('es-screen').value,
+        startTime: document.getElementById('es-time').value,
+        price: {
+            silver: parseInt(document.getElementById('es-silver').value),
+            gold: parseInt(document.getElementById('es-gold').value),
+            platinum: parseInt(document.getElementById('es-platinum').value)
+        }
+    };
+    try {
+        const r = await Auth.fetchWithAuth('/show/update-show/' + id, { method: 'PATCH', body: payload });
+        if (!r.ok) throw new Error('Failed'); showMsg('Show updated!', 'success');
+        closeModal('edit-show-modal'); loadShows();
+    } catch (e) { showMsg(e.message, 'error'); }
+});
 
 // ==================== BOOKINGS ====================
 async function loadAllBookings() {
