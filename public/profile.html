@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         .profile-container {
             max-width: 1000px;
@@ -188,6 +189,23 @@
             </div>
         </div>
     </div>
+    <!-- Cancellation Reason Modal -->
+    <div id="cancel-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:2000; align-items:center; justify-content:center;">
+        <div style="background:var(--bg-card); border-radius:16px; padding:2rem; width:90%; max-width:420px; border:1px solid var(--glass-border);">
+            <h3 style="margin-bottom:1rem;"><i class="fa-solid fa-circle-question" style="color:var(--primary-color);"></i> Why are you cancelling?</h3>
+            <div id="cancel-reasons" style="display:flex; flex-wrap:wrap; gap:0.5rem; margin-bottom:1.5rem;">
+                <button class="reason-chip" onclick="selectReason(this)" style="padding:0.5rem 1rem; border-radius:20px; border:1px solid var(--glass-border); background:rgba(255,255,255,0.05); color:white; cursor:pointer;">Plan changed</button>
+                <button class="reason-chip" onclick="selectReason(this)" style="padding:0.5rem 1rem; border-radius:20px; border:1px solid var(--glass-border); background:rgba(255,255,255,0.05); color:white; cursor:pointer;">Found cheaper</button>
+                <button class="reason-chip" onclick="selectReason(this)" style="padding:0.5rem 1rem; border-radius:20px; border:1px solid var(--glass-border); background:rgba(255,255,255,0.05); color:white; cursor:pointer;">Wrong show selected</button>
+                <button class="reason-chip" onclick="selectReason(this)" style="padding:0.5rem 1rem; border-radius:20px; border:1px solid var(--glass-border); background:rgba(255,255,255,0.05); color:white; cursor:pointer;">Emergency</button>
+                <button class="reason-chip" onclick="selectReason(this)" style="padding:0.5rem 1rem; border-radius:20px; border:1px solid var(--glass-border); background:rgba(255,255,255,0.05); color:white; cursor:pointer;">Other</button>
+            </div>
+            <div style="display:flex;gap:1rem;justify-content:flex-end;">
+                <button class="btn-save" style="background:#555;" onclick="document.getElementById('cancel-modal').style.display='none'">Go Back</button>
+                <button class="btn-save" style="background:#ff4d4d;" id="confirm-cancel-btn" onclick="confirmCancellation()">Cancel Booking</button>
+            </div>
+        </div>
+    </div>
 
     <div class="profile-container">
         <div class="profile-sidebar">
@@ -201,6 +219,7 @@
             <div class="profile-nav">
                 <button class="active" onclick="switchTab('details', this)"><i class="fa-solid fa-address-card"></i> My Details</button>
                 <button onclick="switchTab('bookings', this)"><i class="fa-solid fa-ticket"></i> My Bookings</button>
+                <button onclick="switchTab('payments', this)"><i class="fa-solid fa-credit-card"></i> Payments</button>
                 <button onclick="switchTab('security', this)"><i class="fa-solid fa-shield-halved"></i> Security</button>
             </div>
         </div>
@@ -226,10 +245,23 @@
             <!-- My Bookings Tab -->
             <div id="tab-bookings" class="tab-content">
                 <h2 style="margin-bottom: 1.5rem;">My Bookings</h2>
+                <div style="display:flex;gap:1rem;margin-bottom:1.5rem;">
+                    <button class="btn-save" style="padding:0.5rem 1.5rem;" onclick="filterBookings('upcoming')" id="btn-upcoming">Upcoming</button>
+                    <button class="btn-save" style="padding:0.5rem 1.5rem; background:rgba(255,255,255,0.1);" onclick="filterBookings('past')" id="btn-past">Past</button>
+                    <button class="btn-save" style="padding:0.5rem 1.5rem; background:rgba(255,255,255,0.1);" onclick="filterBookings('all')" id="btn-all">All</button>
+                </div>
                 <div id="bookings-container">
                     <p style="color: var(--text-muted)">Loading bookings...</p>
                 </div>
                 <div id="recommendations-container" style="margin-top: 3rem;"></div>
+            </div>
+
+            <!-- Payments Tab -->
+            <div id="tab-payments" class="tab-content">
+                <h2 style="margin-bottom: 1.5rem;">Payment History</h2>
+                <div id="transactions-container">
+                    <p style="color: var(--text-muted)">Loading transactions...</p>
+                </div>
             </div>
 
             <!-- Security Tab -->
@@ -393,26 +425,178 @@
                 console.error("Failed to load recommendations", err);
             }
         }
+        // ---- Cancellation Modal ----
+        let cancelBookingId = null;
+        let selectedReason = null;
 
-        window.viewTicket = function(id, show, seats, amount) {
-            document.getElementById('t-id').textContent = id;
-            document.getElementById('t-show').textContent = show;
-            document.getElementById('t-seats').textContent = seats;
-            document.getElementById('t-amount').textContent = amount;
-            document.getElementById('t-qr').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=CineMagic_Booking_${id}`;
-            document.getElementById('ticket-modal').style.display = 'flex';
+        window.selectReason = function(btn) {
+            document.querySelectorAll('.reason-chip').forEach(c => { c.style.background = 'rgba(255,255,255,0.05)'; c.style.borderColor = 'var(--glass-border)'; });
+            btn.style.background = 'var(--primary-color)';
+            btn.style.borderColor = 'var(--primary-color)';
+            selectedReason = btn.textContent;
         };
 
-        window.cancelBooking = async function(id) {
-            if(!confirm("Are you sure you want to cancel this ticket? This action cannot be undone.")) return;
+        window.cancelBooking = function(id) {
+            cancelBookingId = id;
+            selectedReason = null;
+            document.querySelectorAll('.reason-chip').forEach(c => { c.style.background = 'rgba(255,255,255,0.05)'; c.style.borderColor = 'var(--glass-border)'; });
+            document.getElementById('cancel-modal').style.display = 'flex';
+        };
+
+        window.confirmCancellation = async function() {
+            if (!selectedReason) { alert('Please select a reason'); return; }
             try {
-                const res = await Auth.fetchWithAuth('/booking/cancel-booking/' + id, { method: 'DELETE' });
+                const res = await Auth.fetchWithAuth('/booking/cancel-booking/' + cancelBookingId, {
+                    method: 'DELETE',
+                    body: { reason: selectedReason }
+                });
                 if (!res.ok) throw new Error('Failed to cancel booking');
+                document.getElementById('cancel-modal').style.display = 'none';
                 alert("Booking cancelled successfully.");
                 fetchBookings();
-            } catch (err) {
-                alert(err.message);
+            } catch (err) { alert(err.message); }
+        };
+
+        // ---- Booking Filtering ----
+        let allBookingsData = [];
+        window.filterBookings = function(filter) {
+            ['upcoming','past','all'].forEach(f => {
+                document.getElementById('btn-' + f).style.background = f === filter ? 'var(--primary-color)' : 'rgba(255,255,255,0.1)';
+            });
+            const now = new Date();
+            let filtered = allBookingsData;
+            if (filter === 'upcoming') {
+                filtered = allBookingsData.filter(b => {
+                    const st = b.show?.startTime ? new Date(b.show.startTime) : null;
+                    return st && st > now && (b.bookingStatus || b.status) !== 'cancelled';
+                });
+            } else if (filter === 'past') {
+                filtered = allBookingsData.filter(b => {
+                    const st = b.show?.startTime ? new Date(b.show.startTime) : null;
+                    return (st && st <= now) || (b.bookingStatus || b.status) === 'cancelled';
+                });
             }
+            renderBookingCards(filtered);
+        };
+
+        function renderBookingCards(bookings) {
+            const container = document.getElementById('bookings-container');
+            if (bookings.length === 0) {
+                container.innerHTML = '<p style="color: var(--text-muted)">No bookings in this category.</p>';
+                return;
+            }
+            container.innerHTML = bookings.map(b => {
+                const isCancelled = (b.bookingStatus || b.status) === 'cancelled';
+                const movieName = b.show?.movieId?.title || b.show?.title || (typeof b.show === 'string' ? `ID: ${b.show}` : 'Unknown Movie');
+                let seatsStr = 'N/A';
+                if (b.bookedSeats && Array.isArray(b.bookedSeats)) {
+                    seatsStr = b.bookedSeats.map(s => `${s.row}${s.number}`).join(', ');
+                }
+                const seatTypes = b.bookedSeats ? [...new Set(b.bookedSeats.map(s => s.type))] : [];
+                const typeColors = { silver: '#c0c0c0', gold: '#ffd700', platinum: '#a0b2c6' };
+                const typeBadges = seatTypes.map(t => `<span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:0.7rem;background:${typeColors[t]||'#555'};color:#000;margin-right:4px;">${t}</span>`).join('');
+                const showTime = b.show?.startTime ? new Date(b.show.startTime).toLocaleString() : '';
+
+                return `
+                <div class="booking-card" style="border-left: 3px solid ${isCancelled ? '#ff4d4d' : 'var(--primary-color)'};">
+                    <div class="booking-details">
+                        <h4>${movieName}</h4>
+                        <p style="color: var(--text-muted); font-size: 0.9rem;">
+                            ${showTime ? `<i class="fa-solid fa-clock"></i> ${showTime}<br>` : ''}
+                            Seats: ${seatsStr} ${typeBadges}<br>
+                            Total: ₹${b.totalAmount || 0}
+                        </p>
+                        <div style="margin-top: 1rem; display: flex; gap: 0.5rem; flex-wrap:wrap;">
+                            ${!isCancelled ? `<button class="btn-save" style="padding: 0.5rem 1rem; font-size: 0.85rem;" onclick="viewTicket('${b._id}', '${movieName.replace(/'/g, "\\'")}', '${seatsStr}', '${b.totalAmount || 0}')"><i class="fa-solid fa-ticket"></i> View Ticket</button>` : ''}
+                            ${!isCancelled ? `<button class="btn-save" style="padding: 0.5rem 1rem; font-size: 0.85rem; background: #ff4d4d;" onclick="cancelBooking('${b._id}')"><i class="fa-solid fa-xmark"></i> Cancel</button>` : ''}
+                            ${!isCancelled ? `<button class="btn-save" style="padding: 0.5rem 1rem; font-size: 0.85rem; background: #2196f3;" onclick="downloadReceipt('${b._id}', '${movieName.replace(/'/g, "\\'")}', '${seatsStr}', '${b.totalAmount || 0}', '${showTime}')"><i class="fa-solid fa-download"></i> Receipt</button>` : ''}
+                        </div>
+                    </div>
+                    <div class="booking-status" style="${isCancelled ? 'background: rgba(255,77,77,0.1); color: #ff4d4d;' : ''}">${b.bookingStatus || b.status || 'Confirmed'}</div>
+                </div>
+            `}).join('');
+        }
+
+        // ---- Receipt Download (jsPDF) ----
+        window.downloadReceipt = function(id, movie, seats, amount, time) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            doc.setFillColor(30, 30, 40);
+            doc.rect(0, 0, 210, 297, 'F');
+            doc.setTextColor(255, 51, 102);
+            doc.setFontSize(24);
+            doc.text('CineMagic', 105, 30, { align: 'center' });
+            doc.setFontSize(12);
+            doc.setTextColor(200, 200, 200);
+            doc.text('Booking Receipt', 105, 42, { align: 'center' });
+            doc.setDrawColor(255, 51, 102);
+            doc.line(30, 50, 180, 50);
+            doc.setFontSize(11);
+            doc.setTextColor(255, 255, 255);
+            let y = 65;
+            const details = [
+                ['Booking ID', id],
+                ['Movie', movie],
+                ['Show Time', time],
+                ['Seats', seats],
+                ['Total Paid', '\u20b9' + amount]
+            ];
+            details.forEach(([label, value]) => {
+                doc.setTextColor(150, 150, 150);
+                doc.text(label + ':', 30, y);
+                doc.setTextColor(255, 255, 255);
+                doc.text(value, 80, y);
+                y += 12;
+            });
+            doc.line(30, y + 5, 180, y + 5);
+            doc.setTextColor(100, 100, 100);
+            doc.setFontSize(9);
+            doc.text('Thank you for booking with CineMagic!', 105, y + 15, { align: 'center' });
+            doc.save(`CineMagic_Receipt_${id.slice(-6)}.pdf`);
+        };
+
+        // ---- Transactions ----
+        async function fetchTransactions() {
+            const user = Auth.getUser();
+            if (!user) return;
+            try {
+                const res = await Auth.fetchWithAuth('/payment/my-transactions/' + user._id);
+                if (!res.ok) return;
+                const data = await res.json();
+                const txns = data.data || [];
+                const container = document.getElementById('transactions-container');
+                if (txns.length === 0) {
+                    container.innerHTML = '<p style="color:var(--text-muted)">No transactions yet.</p>';
+                    return;
+                }
+                let totalSpent = txns.reduce((a, t) => a + (t.amount || 0), 0);
+                container.innerHTML = `
+                    <div style="background:rgba(255,51,102,0.1); border:1px solid rgba(255,51,102,0.3); border-radius:12px; padding:1rem; margin-bottom:1.5rem; text-align:center;">
+                        <p style="color:var(--text-muted);font-size:0.9rem;">Total Spent</p>
+                        <h2 style="color:var(--primary-color);">\u20b9${totalSpent}</h2>
+                    </div>
+                    <table style="width:100%; border-collapse:collapse;">
+                        <thead><tr style="border-bottom:1px solid var(--glass-border);">
+                            <th style="padding:0.8rem; text-align:left; color:var(--text-muted);">Date</th>
+                            <th style="padding:0.8rem; text-align:left; color:var(--text-muted);">Amount</th>
+                            <th style="padding:0.8rem; text-align:left; color:var(--text-muted);">Payment ID</th>
+                            <th style="padding:0.8rem; text-align:left; color:var(--text-muted);">Status</th>
+                        </tr></thead>
+                        <tbody>${txns.map(t => `<tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                            <td style="padding:0.8rem; font-size:0.85rem;">${new Date(t.createdAt).toLocaleDateString()}</td>
+                            <td style="padding:0.8rem;">\u20b9${t.amount}</td>
+                            <td style="padding:0.8rem; font-family:monospace; font-size:0.8rem;">${t.transactionId || 'N/A'}</td>
+                            <td style="padding:0.8rem;"><span style="padding:3px 10px;border-radius:10px;font-size:0.8rem;background:${t.status === 'success' ? 'rgba(77,255,136,0.1);color:#4dff88' : 'rgba(255,77,77,0.1);color:#ff4d4d'}">${t.status}</span></td>
+                        </tr>`).join('')}</tbody>
+                    </table>`;
+            } catch (e) { console.error(e); }
+        }
+
+        // Override switchTab to load transactions
+        const origSwitchTab = window.switchTab;
+        window.switchTab = function(tabId, btn) {
+            origSwitchTab(tabId, btn);
+            if (tabId === 'payments') fetchTransactions();
         };
 
         document.getElementById('password-form').addEventListener('submit', async (e) => {

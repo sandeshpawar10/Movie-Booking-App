@@ -204,6 +204,9 @@ exports.cancelBooking = async function(req,res){
 
         book.bookingStatus = "cancelled";
         book.paymentStatus = "failed";
+        if (req.body && req.body.reason) {
+            book.cancellationReason = req.body.reason;
+        }
 
         await book.save();
 

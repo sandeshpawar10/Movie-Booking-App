@@ -46,6 +46,10 @@ const bookingSchema = new Schema({
     reminderSent: {
         type: Boolean,
         default: false
+    },
+    cancellationReason: {
+        type: String,
+        default: null
     }
 },{
     timestamps: true

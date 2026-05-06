@@ -7,6 +7,16 @@ const show = require("../models/showModel")
 const user = require("../models/userModel")
 const sendEmail = require("../utils/mailer")
 
+exports.getMyTransactions = async function(req, res) {
+    try {
+        const { userid } = req.params;
+        const transactions = await trannsaction.find({ userId: userid }).populate('bookingId').sort({ createdAt: -1 });
+        return res.status(200).json({ data: transactions });
+    } catch (error) {
+        return res.status(500).json({ message: "Error fetching transactions", error: error.message });
+    }
+}
+
 exports.createOrder = async function(req,res){
     try {
         const {bookingid} = req.body
