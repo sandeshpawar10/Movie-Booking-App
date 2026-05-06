@@ -12,13 +12,24 @@ exports.getAnalytics = async (req, res) => {
         
         const totalUsers = await user.countDocuments();
         const activeTheatres = await theatre.countDocuments({ isActive: true, isApproved: true });
+
+        // Cancellation reason breakdown
+        const cancelledBookings = await booking.find({ bookingStatus: 'cancelled', cancellationReason: { $ne: null } });
+        const cancellationReasons = {};
+        cancelledBookings.forEach(b => {
+            const reason = b.cancellationReason || 'Other';
+            cancellationReasons[reason] = (cancellationReasons[reason] || 0) + 1;
+        });
+        const totalCancelled = await booking.countDocuments({ bookingStatus: 'cancelled' });
         
         return res.status(200).json({
             data: {
                 totalBookings,
                 totalRevenue,
                 totalUsers,
-                activeTheatres
+                activeTheatres,
+                totalCancelled,
+                cancellationReasons
             }
         });
     } catch (error) {
