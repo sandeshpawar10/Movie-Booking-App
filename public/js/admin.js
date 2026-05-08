@@ -20,6 +20,28 @@ async function fetchPosterForField(titleFieldId, posterFieldId, btn) {
     btn.disabled = false;
 }
 
+window.addCastInput = function(containerId, name = '', photo = '') {
+    const container = document.getElementById(containerId);
+    const div = document.createElement('div');
+    div.className = 'cast-row';
+    div.style.display = 'grid';
+    div.style.gridTemplateColumns = 'auto 1fr 1fr auto';
+    div.style.gap = '0.5rem';
+    div.style.alignItems = 'center';
+    div.style.marginBottom = '0.5rem';
+    
+    div.innerHTML = `
+        <img src="${photo || 'https://www.pngitem.com/pimgs/m/146-1468479_my-profile-icon-blank-profile-picture-circle-hd.png'}" 
+             style="width:35px; height:35px; border-radius:50%; object-fit:cover; border:1px solid var(--glass-border)" 
+             class="cast-preview">
+        <input type="text" class="form-control cast-name" placeholder="Name" value="${name}">
+        <input type="url" class="form-control cast-photo" placeholder="Photo URL" value="${photo}" 
+               oninput="this.parentElement.querySelector('.cast-preview').src = this.value || 'https://www.pngitem.com/pimgs/m/146-1468479_my-profile-icon-blank-profile-picture-circle-hd.png'">
+        <button type="button" class="btn-action" style="background:#ff4d4d; padding:0.4rem" onclick="this.parentElement.remove()"><i class="fa-solid fa-trash"></i></button>
+    `;
+    container.appendChild(div);
+};
+
 document.addEventListener('DOMContentLoaded', () => {
     const user = Auth.getUser();
     if (!user || user.role !== 'admin') {
@@ -98,13 +120,20 @@ document.getElementById('add-movie-form').addEventListener('submit', async (e) =
         duration: parseInt(document.getElementById('m-duration').value),
         language: document.getElementById('m-language').value,
         genre: document.getElementById('m-genre').value.split(',').map(s => s.trim()),
-        poster: document.getElementById('m-poster').value
+        poster: document.getElementById('m-poster').value,
+        director: document.getElementById('m-director').value,
+        cast: Array.from(document.querySelectorAll('.cast-row')).filter(el => el.closest('#m-cast-container')).map(row => ({
+            name: row.querySelector('.cast-name').value,
+            photo: row.querySelector('.cast-photo').value
+        })).filter(c => c.name)
     };
+    console.log("Adding Movie Payload:", payload); // Debugging line
     try {
         const res = await Auth.fetchWithAuth('/addmovie', { method: 'POST', body: payload });
         if (!res.ok) throw new Error('Failed to add movie');
         showMsg('Movie added successfully!', 'success');
         e.target.reset();
+        document.getElementById('m-cast-container').innerHTML = '';
     } catch (err) { showMsg(err.message, 'error'); }
 });
 
@@ -140,6 +169,14 @@ function editMovie(movie) {
     document.getElementById('edit-language').value = movie.language;
     document.getElementById('edit-genre').value = (movie.genre || []).join(', ');
     document.getElementById('edit-poster').value = movie.poster || '';
+    document.getElementById('edit-director').value = movie.director || '';
+    
+    // Populate Cast
+    const castContainer = document.getElementById('edit-cast-container');
+    castContainer.innerHTML = '';
+    const castArray = Array.isArray(movie.cast) ? movie.cast : [];
+    castArray.forEach(c => addCastInput('edit-cast-container', c.name, c.photo));
+
     document.getElementById('edit-modal').classList.add('open');
 }
 
@@ -152,8 +189,14 @@ document.getElementById('edit-movie-form').addEventListener('submit', async (e) 
         duration: parseInt(document.getElementById('edit-duration').value),
         language: document.getElementById('edit-language').value,
         genre: document.getElementById('edit-genre').value.split(',').map(s => s.trim()),
-        poster: document.getElementById('edit-poster').value
+        poster: document.getElementById('edit-poster').value,
+        director: document.getElementById('edit-director').value,
+        cast: Array.from(document.querySelectorAll('.cast-row')).filter(el => el.closest('#edit-cast-container')).map(row => ({
+            name: row.querySelector('.cast-name').value,
+            photo: row.querySelector('.cast-photo').value
+        })).filter(c => c.name)
     };
+    console.log("Updating Movie Payload:", payload); // Debugging line
     try {
         const r = await Auth.fetchWithAuth('/update-movie/' + id, { method: 'PATCH', body: payload });
         if (!r.ok) throw new Error('Failed to update movie');

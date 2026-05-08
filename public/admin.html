@@ -54,7 +54,17 @@
             <div class="form-group"><label>Title</label><input type="text" id="edit-title" class="form-control"></div>
             <div class="form-group"><label>Description</label><textarea id="edit-desc" class="form-control" rows="2"></textarea></div>
             <div class="row-flex"><div class="form-group"><label>Duration</label><input type="number" id="edit-duration" class="form-control"></div><div class="form-group"><label>Language</label><input type="text" id="edit-language" class="form-control"></div></div>
-            <div class="form-group"><label>Genres</label><input type="text" id="edit-genre" class="form-control"></div>
+            <div class="row-flex">
+                <div class="form-group"><label>Genres</label><input type="text" id="edit-genre" class="form-control"></div>
+                <div class="form-group"><label>Director</label><input type="text" id="edit-director" class="form-control"></div>
+            </div>
+            <div class="form-group">
+                <label>Cast Members</label>
+                <div id="edit-cast-container" style="display:grid; grid-template-columns:1fr 1fr auto; gap:0.5rem; margin-bottom:0.5rem; max-height:150px; overflow-y:auto;">
+                    <!-- Cast inputs -->
+                </div>
+                <button type="button" class="btn-submit" style="background:#444; padding:0.4rem 1rem; font-size:0.85rem;" onclick="addCastInput('edit-cast-container')"><i class="fa-solid fa-plus"></i> Add Cast Member</button>
+            </div>
             <div class="form-group"><label>Poster URL</label><div style="display:flex;gap:.5rem"><input type="url" id="edit-poster" class="form-control"><button type="button" class="btn-submit" style="white-space:nowrap" onclick="fetchPosterForField('edit-title','edit-poster',this)"><i class="fa-solid fa-wand-magic-sparkles"></i> Auto-Fetch</button></div></div>
             <div style="display:flex;gap:1rem;justify-content:flex-end"><button type="button" class="btn-submit" style="background:#555" onclick="closeModal('edit-modal')">Cancel</button><button type="submit" class="btn-submit">Save</button></div>
         </form>
@@ -137,7 +147,18 @@
                     <div class="form-group"><label>Title</label><input type="text" id="m-title" class="form-control" required></div>
                     <div class="form-group"><label>Description</label><textarea id="m-desc" class="form-control" rows="2" required></textarea></div>
                     <div class="row-flex"><div class="form-group"><label>Release Date</label><input type="date" id="m-date" class="form-control" required></div><div class="form-group"><label>Duration (mins)</label><input type="number" id="m-duration" class="form-control" required></div></div>
-                    <div class="row-flex"><div class="form-group"><label>Language</label><input type="text" id="m-language" class="form-control" required></div><div class="form-group"><label>Genres (comma sep.)</label><input type="text" id="m-genre" class="form-control" required placeholder="Action, Drama"></div></div>
+                    <div class="row-flex">
+                        <div class="form-group"><label>Language</label><input type="text" id="m-language" class="form-control" required></div>
+                        <div class="form-group"><label>Genres (comma sep.)</label><input type="text" id="m-genre" class="form-control" required placeholder="Action, Drama"></div>
+                    </div>
+                    <div class="form-group"><label>Director</label><input type="text" id="m-director" class="form-control" placeholder="Director Name"></div>
+                    <div class="form-group">
+                        <label>Cast Members</label>
+                        <div id="m-cast-container" style="display:grid; grid-template-columns:1fr 1fr auto; gap:0.5rem; margin-bottom:0.5rem;">
+                            <!-- Cast inputs -->
+                        </div>
+                        <button type="button" class="btn-submit" style="background:#444; padding:0.4rem 1rem; font-size:0.85rem;" onclick="addCastInput('m-cast-container')"><i class="fa-solid fa-plus"></i> Add Cast Member</button>
+                    </div>
                     <div class="form-group"><label>Poster URL</label><div style="display:flex;gap:.5rem"><input type="url" id="m-poster" class="form-control" required><button type="button" class="btn-submit" style="white-space:nowrap" onclick="fetchPosterForField('m-title','m-poster',this)"><i class="fa-solid fa-wand-magic-sparkles"></i> Auto-Fetch</button></div></div>
                     <button type="submit" class="btn-submit">Add Movie</button>
                 </form>

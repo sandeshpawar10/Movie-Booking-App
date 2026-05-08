@@ -11,22 +11,13 @@ exports.addMovieFunction = async function(req,res){
 
         
 
-        const {title,descrition,duration,releaseDate,genre,language,poster,createdBy} = validationResult.data
-        const existingMovie = await movie.findOne({ title })
-
+        const existingMovie = await movie.findOne({ title: validationResult.data.title })
         if(existingMovie){
-            return res.status(409).json({
-                message: "Movie already exists"
-            })
+            return res.status(409).json({ message: "Movie already exists" })
         }
+        
         const m = await movie.create({
-            title,
-            descrition,
-            duration,
-            releaseDate,
-            genre,
-            language,
-            poster,
+            ...validationResult.data,
             createdBy: req.user.id
         })
 
@@ -86,18 +77,10 @@ exports.updateMovieFunction = async function(req,res){
 
         
 
-        const {title,descrition,duration,releaseDate,genre,language,poster,createdBy} = validationResult.data
-
-        const m = await movie.findByIdAndUpdate(id,{
-            title,
-            descrition,
-            duration,
-            releaseDate,
-            genre,
-            language,
-            poster,
+        const m = await movie.findByIdAndUpdate(id, {
+            ...validationResult.data,
             createdBy: req.user.id
-        })
+        }, { new: true })
 
         if (!m) {
             return res.status(404).json({

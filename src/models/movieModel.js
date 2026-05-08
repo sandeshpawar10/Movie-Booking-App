@@ -25,6 +25,13 @@ const movieShcema = new Schema({
         required: true
     },
     poster: String,
+    director: String,
+    cast: [
+        {
+            name: String,
+            photo: String
+        }
+    ],
     createdBy:{
         type: Schema.Types.ObjectId,
         ref: "user" //admin

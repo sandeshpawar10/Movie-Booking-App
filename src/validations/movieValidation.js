@@ -10,7 +10,12 @@ const movieValidation = z.object({
     language: z.string(),
     descrition: z.string().optional(),
     genre: z.any().optional(),
-    poster: z.string().optional()
+    poster: z.string().optional(),
+    director: z.string().optional(),
+    cast: z.array(z.object({
+        name: z.string(),
+        photo: z.string().optional()
+    })).optional()
 })
 
 const titleValidation = z.object({
@@ -19,12 +24,17 @@ const titleValidation = z.object({
 
 const updateMovieValidation = z.object({
     title: z.string().min(1).optional(),
-    description: z.string().optional(),
+    descrition: z.string().optional(),
     duration: z.number().optional(),
-    releaseDate: z.date().optional(),
-    genre: z.string().optional(),
+    releaseDate: z.coerce.date().optional(),
+    genre: z.any().optional(),
     language: z.string().optional(),
-    poster: z.string().optional()
+    poster: z.string().optional(),
+    director: z.string().optional(),
+    cast: z.array(z.object({
+        name: z.string(),
+        photo: z.string().optional()
+    })).optional()
 })
 
 const updateshowValidation = z.object({

@@ -114,6 +114,53 @@
             color: white;
             box-shadow: 0 0 15px rgba(255,51,102,0.4);
         }
+
+        /* Cast & Director Styles */
+        .cast-section {
+            margin-top: 2rem;
+            padding: 0 5%;
+            max-width: 1250px;
+            margin: 2rem auto;
+        }
+        .cast-container {
+            display: flex;
+            gap: 1.5rem;
+            overflow-x: auto;
+            padding: 1rem 0;
+            scrollbar-width: none; /* Firefox */
+        }
+        .cast-container::-webkit-scrollbar { display: none; } /* Chrome/Safari */
+        
+        .cast-card {
+            flex: 0 0 120px;
+            text-align: center;
+        }
+        .cast-photo {
+            width: 100px;
+            height: 100px;
+            min-width: 100px;
+            min-height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+            flex-shrink: 0;
+            border: 2px solid var(--glass-border);
+            margin-bottom: 0.8rem;
+            transition: transform 0.3s;
+            background: rgba(255,255,255,0.05);
+        }
+        .cast-card:hover .cast-photo {
+            transform: scale(1.1);
+            border-color: var(--primary-color);
+        }
+        .cast-name {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: white;
+            display: block;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
     </style>
 </head>
 <body>
@@ -328,8 +375,26 @@
                             ${genres}
                         </div>
                         <p class="movie-desc-large">${desc}</p>
+                        ${movie.director ? `<p style="font-size: 1.1rem; color: var(--primary-color); font-weight: 600;"><i class="fa-solid fa-clapperboard"></i> Director: <span style="color:white; font-weight:400; margin-left:5px;">${movie.director}</span></p>` : ''}
                     </div>
                 </div>
+
+                ${(movie.cast && movie.cast.length > 0) ? `
+                <div class="cast-section">
+                    <h3 style="font-size: 1.8rem; margin-bottom: 1rem; color: white;">Cast</h3>
+                    <div class="cast-container">
+                        ${movie.cast.map(c => `
+                            <div class="cast-card">
+                                <img src="${c.photo || 'https://www.pngitem.com/pimgs/m/146-1468479_my-profile-icon-blank-profile-picture-circle-hd.png'}" 
+                                     alt="${c.name}" 
+                                     class="cast-photo"
+                                     onerror="this.src='https://www.pngitem.com/pimgs/m/146-1468479_my-profile-icon-blank-profile-picture-circle-hd.png'">
+                                <span class="cast-name">${c.name}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                ` : ''}
 
                 <div class="shows-section">
                     <h2 style="font-size:2.5rem; margin-bottom:1rem; border-bottom: 2px solid var(--primary-color); display:inline-block; padding-bottom:0.5rem;">Available Shows</h2>
