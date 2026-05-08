@@ -321,52 +321,20 @@
             const container = document.getElementById('bookings-container');
             const user = Auth.getUser();
             try {
-                // Fetching from backend mapping logic
                 const res = await Auth.fetchWithAuth(`/booking/my-bookings/${user._id}`);
                 if (!res.ok) throw new Error('Failed to fetch');
                 const data = await res.json();
                 
-                // Expecting array of bookings
-                const bookings = Array.isArray(data) ? data : (data.data || data.Bookings || data.Booking || []);
+                // Store globally for filtering
+                allBookingsData = Array.isArray(data) ? data : (data.data || data.Bookings || data.Booking || []);
                 
-                if (bookings.length === 0) {
-                    container.innerHTML = '<p style="color: var(--text-muted)">You have no bookings yet.</p>';
-                    return;
-                }
-
-                container.innerHTML = bookings.map(b => {
-                    const isCancelled = (b.bookingStatus || b.status) === 'cancelled';
-                    const movieName = b.show?.movieId?.title || b.show?.title || (typeof b.show === 'string' ? `ID: ${b.show}` : 'Unknown Movie');
-                    const showIdStr = typeof b.show === 'string' ? b.show : (b.show?._id || '');
-                    
-                    let seatsStr = 'N/A';
-                    if (b.bookedSeats && Array.isArray(b.bookedSeats)) {
-                        seatsStr = b.bookedSeats.map(s => `${s.row}${s.number}`).join(', ');
-                    } else if (b.seats) {
-                        seatsStr = Array.isArray(b.seats) ? b.seats.join(', ') : b.seats;
-                    }
-
-                    return `
-                    <div class="booking-card">
-                        <div class="booking-details">
-                            <h4>${movieName}</h4>
-                            <p style="color: var(--text-muted); font-size: 0.9rem;">
-                                Seats: ${seatsStr} <br>
-                                Total Amount: ₹${b.totalAmount || b.totalamount || '0'}
-                            </p>
-                            <div style="margin-top: 1rem; display: flex; gap: 0.5rem;">
-                                ${!isCancelled ? `<button class="btn-save" style="padding: 0.5rem 1rem; font-size: 0.85rem;" onclick="viewTicket('${b._id}', '${movieName.replace(/'/g, "\\'")}', '${seatsStr}', '${b.totalAmount || b.totalamount || 0}')"><i class="fa-solid fa-ticket"></i> View Ticket</button>` : ''}
-                                ${!isCancelled ? `<button class="btn-save" style="padding: 0.5rem 1rem; font-size: 0.85rem; background: #ff4d4d;" onclick="cancelBooking('${b._id}')"><i class="fa-solid fa-xmark"></i> Cancel</button>` : ''}
-                            </div>
-                        </div>
-                        <div class="booking-status" style="${isCancelled ? 'background: rgba(255,77,77,0.1); color: #ff4d4d;' : ''}">${b.bookingStatus || b.status || 'Confirmed'}</div>
-                    </div>
-                `}).join('');
+                // Default view is 'upcoming'
+                filterBookings('upcoming');
 
                 // Extract genres for recommendations
                 const bookedMovieIds = new Set();
                 const genres = new Set();
-                bookings.forEach(b => {
+                allBookingsData.forEach(b => {
                     const m = b.show?.movieId;
                     if (m && m._id && (b.bookingStatus || b.status) !== 'cancelled') {
                         bookedMovieIds.add(m._id);

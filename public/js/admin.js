@@ -61,6 +61,28 @@ async function loadAnalytics() {
         document.getElementById('stat-revenue').textContent = data.totalRevenue ? `₹${data.totalRevenue}` : '₹0';
         document.getElementById('stat-users').textContent = data.totalUsers || 0;
         document.getElementById('stat-theatres').textContent = data.activeTheatres || 0;
+
+        // Render Cancellation Chart
+        const chart = document.getElementById('cancellation-chart');
+        if (data.cancellationReasons && Object.keys(data.cancellationReasons).length > 0) {
+            const total = Object.values(data.cancellationReasons).reduce((a, b) => a + b, 0);
+            chart.innerHTML = Object.entries(data.cancellationReasons).map(([reason, count]) => {
+                const perc = (count / total * 100).toFixed(0);
+                return `
+                    <div>
+                        <div style="display:flex; justify-content:space-between; margin-bottom:0.3rem; font-size:0.85rem;">
+                            <span>${reason}</span>
+                            <span>${count} (${perc}%)</span>
+                        </div>
+                        <div style="height:8px; background:rgba(255,255,255,0.05); border-radius:4px; overflow:hidden;">
+                            <div style="height:100%; width:${perc}%; background:var(--primary-color);"></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        } else {
+            chart.innerHTML = '<p style="color:var(--text-muted)">No cancellation data available yet.</p>';
+        }
     } catch (e) {
         console.error('Analytics load error:', e);
     }
@@ -98,12 +120,48 @@ async function loadAllMovies() {
             const p = m.poster && m.poster.startsWith('http') ? m.poster : '';
             return `<tr>
                 <td>${p ? '<img src="'+p+'" style="width:40px;height:55px;object-fit:cover;border-radius:4px">' : '-'}</td>
-                <td>${m.title}</td><td>${m.language||'-'}</td><td>${m.duration||'-'} min</td>
-                <td><button class="btn-icon btn-edit" onclick="editMovie('${m._id}')"><i class="fa-solid fa-pen"></i></button>
-                <button class="btn-icon btn-del" onclick="delMovie('${m._id}')"><i class="fa-solid fa-trash"></i></button></td></tr>`;
+                <td>${m.title}</td>
+                <td>${m.language}</td>
+                <td>${m.duration}m</td>
+                <td>
+                    <button class="btn-action" style="background:#ff9800" onclick='editMovie(${JSON.stringify(m).replace(/'/g, "&apos;")})'><i class="fa-solid fa-pen"></i></button>
+                    <button class="btn-action" onclick="delMovie('${m._id}')"><i class="fa-solid fa-trash"></i></button>
+                </td>
+            </tr>`;
         }).join('');
     } catch (e) { tbody.innerHTML = '<tr><td colspan="5" style="color:#ff4d4d">Error</td></tr>'; }
 }
+
+function editMovie(movie) {
+    document.getElementById('edit-id').value = movie._id;
+    document.getElementById('edit-title').value = movie.title;
+    document.getElementById('edit-desc').value = movie.descrition || '';
+    document.getElementById('edit-duration').value = movie.duration;
+    document.getElementById('edit-language').value = movie.language;
+    document.getElementById('edit-genre').value = (movie.genre || []).join(', ');
+    document.getElementById('edit-poster').value = movie.poster || '';
+    document.getElementById('edit-modal').classList.add('open');
+}
+
+document.getElementById('edit-movie-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const id = document.getElementById('edit-id').value;
+    const payload = {
+        title: document.getElementById('edit-title').value,
+        descrition: document.getElementById('edit-desc').value,
+        duration: parseInt(document.getElementById('edit-duration').value),
+        language: document.getElementById('edit-language').value,
+        genre: document.getElementById('edit-genre').value.split(',').map(s => s.trim()),
+        poster: document.getElementById('edit-poster').value
+    };
+    try {
+        const r = await Auth.fetchWithAuth('/update-movie/' + id, { method: 'PATCH', body: payload });
+        if (!r.ok) throw new Error('Failed to update movie');
+        showMsg('Movie updated!', 'success');
+        closeModal('edit-modal');
+        loadAllMovies();
+    } catch (e) { showMsg(e.message, 'error'); }
+});
 
 window.delMovie = async function(id) {
     if (!confirm('Delete this movie?')) return;
@@ -112,37 +170,7 @@ window.delMovie = async function(id) {
         if (!r.ok) throw new Error('Failed'); showMsg('Movie deleted!', 'success'); loadAllMovies();
     } catch (e) { showMsg(e.message, 'error'); }
 };
-
-window.editMovie = async function(id) {
-    try {
-        const r = await fetch('/get-movie/' + id); const d = await r.json();
-        const m = d.Movie || d.movie || d;
-        document.getElementById('edit-id').value = m._id;
-        document.getElementById('edit-title').value = m.title || '';
-        document.getElementById('edit-desc').value = m.descrition || '';
-        document.getElementById('edit-duration').value = m.duration || '';
-        document.getElementById('edit-language').value = m.language || '';
-        document.getElementById('edit-genre').value = (m.genre || []).join(', ');
-        document.getElementById('edit-poster').value = m.poster || '';
-        document.getElementById('edit-modal').classList.add('open');
-    } catch (e) { showMsg(e.message, 'error'); }
-};
 window.closeModal = function(id) { document.getElementById(id).classList.remove('open'); };
-
-document.getElementById('edit-movie-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const id = document.getElementById('edit-id').value;
-    const payload = {};
-    const f = (el, key) => { const v = document.getElementById(el).value; if (v) payload[key] = v; };
-    f('edit-title','title'); f('edit-desc','description'); f('edit-language','language'); f('edit-poster','poster');
-    const dur = document.getElementById('edit-duration').value; if (dur) payload.duration = parseInt(dur);
-    const g = document.getElementById('edit-genre').value; if (g) payload.genre = g.split(',').map(s=>s.trim());
-    try {
-        const r = await Auth.fetchWithAuth('/update-movie/' + id, { method: 'PATCH', body: payload });
-        if (!r.ok) throw new Error('Failed'); showMsg('Movie updated!', 'success');
-        closeModal('edit-modal'); loadAllMovies();
-    } catch (e) { showMsg(e.message, 'error'); }
-});
 
 // ==================== THEATRES ====================
 document.getElementById('add-theatre-form').addEventListener('submit', async (e) => {
