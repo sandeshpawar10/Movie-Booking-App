@@ -1,8 +1,41 @@
 // Auth module
 const Auth = {
-    // Check if user is logged in
+    // Decode a JWT payload without a library (base64url → JSON)
+    _decodeTokenPayload(token) {
+        try {
+            const base64Url = token.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const jsonPayload = decodeURIComponent(
+                atob(base64).split('').map(c =>
+                    '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+                ).join('')
+            );
+            return JSON.parse(jsonPayload);
+        } catch (e) {
+            return null;
+        }
+    },
+
+    // Check if the stored token is expired
+    isTokenExpired() {
+        const token = this.getToken();
+        if (!token) return true;
+        const payload = this._decodeTokenPayload(token);
+        if (!payload || !payload.exp) return true;
+        // exp is in seconds, Date.now() is in milliseconds
+        // Add a 30-second buffer so we don't send a request that will fail
+        return (payload.exp * 1000) < (Date.now() + 30000);
+    },
+
+    // Check if user is logged in AND token is still valid
     isAuthenticated() {
-        return !!localStorage.getItem('user');
+        if (!localStorage.getItem('user') || !this.getToken()) return false;
+        if (this.isTokenExpired()) {
+            console.warn('Session expired — auto logging out.');
+            this.clearAuth();
+            return false;
+        }
+        return true;
     },
 
     // Get current user from storage
@@ -30,8 +63,24 @@ const Auth = {
         localStorage.removeItem('accessToken');
     },
 
+    // Handle expired/invalid session — clear & redirect
+    _handleSessionExpired() {
+        this.clearAuth();
+        // Avoid redirect loops on login/register pages
+        const path = window.location.pathname;
+        if (path.includes('login') || path.includes('register') || path === '/' || path === '/index.html') return;
+        alert('Your session has expired. Please log in again.');
+        window.location.href = '/login.html';
+    },
+
     // Fetch wrapper to automatically include auth header
     async fetchWithAuth(url, options = {}) {
+        // Pre-flight: check token expiry before even making the request
+        if (this.isTokenExpired()) {
+            this._handleSessionExpired();
+            throw new Error('Session expired');
+        }
+
         const token = this.getToken();
         
         // Merge headers
@@ -51,11 +100,31 @@ const Auth = {
         const fetchOptions = {
             ...options,
             headers,
-            // Include credentials for cookie parsing (refresh token)
-            credentials: 'omit' // or 'include' if CORS allows
+            credentials: 'omit'
         };
 
-        return fetch(url, fetchOptions);
+        const response = await fetch(url, fetchOptions);
+
+        // If server says token is bad/expired, auto-logout
+        if (response.status === 401 || response.status === 403) {
+            this._handleSessionExpired();
+            throw new Error('Session expired');
+        }
+        // Also catch the 400 "Please enter token!" / "Invalid access token" from your middleware
+        if (response.status === 400) {
+            const cloned = response.clone();
+            try {
+                const text = await cloned.text();
+                if (text.includes('token') || text.includes('access token')) {
+                    this._handleSessionExpired();
+                    throw new Error('Session expired');
+                }
+            } catch (e) {
+                // If clone/text fails, just return the original response
+            }
+        }
+
+        return response;
     },
 
     // Login function
@@ -112,7 +181,10 @@ const Auth = {
     // Logout function
     async logout() {
         try {
-            await this.fetchWithAuth('/user/logout', { method: 'POST' });
+            await fetch('/user/logout', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${this.getToken()}` }
+            });
         } catch (error) {
             console.error('Logout API error:', error);
         } finally {
@@ -186,7 +258,7 @@ const Auth = {
     }
 };
 
-// Auto update navbar if it exists
+// Auto-check session validity on every page load
 document.addEventListener('DOMContentLoaded', () => {
     Auth.updateNavbar();
 });
